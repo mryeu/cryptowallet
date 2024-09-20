@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/cryptowallet.iml" filepath="$PROJECT_DIR$/cryptowallet.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/cryptowallet_android.iml" filepath="$PROJECT_DIR$/android/cryptowallet_android.iml" />
+    </modules>
+  </component>
+</project>

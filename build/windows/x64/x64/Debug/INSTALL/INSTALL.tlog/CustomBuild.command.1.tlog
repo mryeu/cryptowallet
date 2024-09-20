@@ -1,0 +1,10 @@
+^D:\CRYPTOWALLET\BUILD\WINDOWS\X64\CMAKEFILES\216E226D8F3003020AE84F1C2B201DBD\INSTALL_FORCE.RULE
+setlocal
+cd .
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\cryptowallet\build\windows\x64\CMakeFiles\216e226d8f3003020ae84f1c2b201dbd\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FB65F3EE-0BFF-3AE5-B321-D89D04341919}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

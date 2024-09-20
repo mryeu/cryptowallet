@@ -1,0 +1,1 @@
+ D:\\cryptowallet\\.dart_tool\\flutter_build\\b1a3762538f18a420d5e8a143cf9ac87\\native_assets.yaml: 
