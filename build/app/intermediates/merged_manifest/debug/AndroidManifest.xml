@@ -26,7 +26,17 @@
 
             <data android:mimeType="text/plain" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+
+            <data android:mimeType="*/*" />
+        </intent>
     </queries>
+
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <permission
         android:name="com.multichain.wallet.crypto.cryptowallet.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -40,7 +50,7 @@
         android:debuggable="true"
         android:extractNativeLibs="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="cryptowallet" >
+        android:label="Kitty Run Wallet" >
         <activity
             android:name="com.multichain.wallet.crypto.cryptowallet.MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"

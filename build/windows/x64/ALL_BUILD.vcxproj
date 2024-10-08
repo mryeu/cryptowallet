@@ -140,6 +140,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
+    <ProjectReference Include="D:\cryptowallet\build\windows\x64\plugins\bitsdojo_window_windows\bitsdojo_window_windows_plugin.vcxproj">
+      <Project>{9D0EDDBC-6908-32C8-9493-A5930AEAF76A}</Project>
+      <Name>bitsdojo_window_windows_plugin</Name>
+    </ProjectReference>
     <ProjectReference Include="D:\cryptowallet\build\windows\x64\runner\cryptowallet.vcxproj">
       <Project>{9C5174C1-9AAF-33DE-8924-BA14B24BA72E}</Project>
       <Name>cryptowallet</Name>

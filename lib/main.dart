@@ -1,29 +1,34 @@
+import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:cryptowallet/services/session_manager.dart';
+import 'package:cryptowallet/wallet_create.dart';
 import 'package:flutter/material.dart';
-import 'Discover_Screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'Play_Screen.dart';
 import 'Swap_Screen.dart';
 import 'Wallet_screen.dart';
 import 'document_screen.dart';
 import 'home_screen.dart';
+import 'wallet_selector_screen.dart';
 
-void main() {
-  runApp(const WalletTop1());
-}
 
-class WalletTop1 extends StatelessWidget {
-  const WalletTop1({super.key});
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // Loại bỏ banner "Debug"
-      title: '#1Wallet',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      home: const WalletScreen(),
-    );
-  }
+  final prefs = await SharedPreferences.getInstance();
+  final walletData = await loadWalletFromJson();
+  bool hasAcceptedTerms = prefs.getBool('acceptedTerms') ?? false;
+
+  // Check if PIN is set
+  String? userPin = SessionManager.userPin;
+
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: hasAcceptedTerms
+        ? (userPin == null
+        ? const SetupPinScreen() // Redirect to PIN setup if PIN is null
+        : (walletData == null ? const WalletSelectorScreen() : const WalletScreen()))
+        : const TermsScreen(),
+  ));
 }
 
 class WalletScreen extends StatefulWidget {
@@ -34,7 +39,7 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  int _selectedIndex = 2; // Mặc định tab Swap được chọn
+  int _selectedIndex = 2; // Default to Swap tab
   static const List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
     PlayScreen(),
@@ -43,7 +48,26 @@ class _WalletScreenState extends State<WalletScreen> {
     Wallet(),
   ];
 
-  // Khi chọn một tab, sẽ thay đổi chỉ số của tab đó
+  @override
+  void initState() {
+    super.initState();
+    _checkPinStatus();
+  }
+
+  // Check if PIN is set before allowing access
+  void _checkPinStatus() {
+    if (SessionManager.userPin == null) {
+      // If PIN is null, redirect to SetupPinScreen
+      Future.microtask(() {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SetupPinScreen()),
+        );
+      });
+    }
+  }
+
+  // When a tab is selected, update the selected tab index
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -53,97 +77,39 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _selectedIndex == 1 // Kiểm tra nếu đang ở PlayScreen thì ẩn AppBar
-          ? null
-          : AppBar(
-        // AppBar chỉ hiện khi không phải PlayScreen
-        title: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                // Xử lý nhấn nút cài đặt
-              },
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.2),
-                  ),
-                ),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.qr_code_scanner),
-              onPressed: () {
-                // Xử lý nhấn nút quét QR code
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.notifications),
-              onPressed: () {
-                // Xử lý nhấn nút thông báo
-              },
-            ),
-          ],
-        ),
-      ),
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.play_arrow_sharp),
-            label: 'Play',
-          ),
-          BottomNavigationBarItem(
-            icon: _buildSwapIcon(),
-            label: 'Swap',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'Document',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Wallet',
-          ),
+      bottomNavigationBar: ConvexAppBar(
+        backgroundColor: Colors.green,
+        style: TabStyle.fixed,
+        items: [
+          const TabItem(icon: Icons.home),
+          const TabItem(icon: Icons.play_arrow_sharp),
+          TabItem(icon: _buildSwapIcon()),
+          const TabItem(icon: Icons.explore),
+          const TabItem(icon: Icons.account_balance_wallet),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.green[700],
-        unselectedItemColor: Colors.purpleAccent,
-        onTap: _onItemTapped,
+        initialActiveIndex: _selectedIndex, // Set the default selected tab
+        onTap: (int index) {
+          _onItemTapped(index); // Change tab index when the user taps
+        },
       ),
     );
   }
 
-  // Hàm để xây dựng icon Swap với hiệu ứng bo tròn và vòng quay
+  // Build the Swap icon with rounded effect and spinning animation
   Widget _buildSwapIcon() {
     return Stack(
       alignment: Alignment.center,
       children: [
-        if (_selectedIndex == 2) // Nếu tab Swap được chọn thì hiển thị hiệu ứng
+        if (_selectedIndex == 2) // Show effect if the Swap tab is selected
           const SizedBox(
-            width: 42,
-            height: 42,
+            width: 52,
+            height: 52,
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.purpleAccent),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
             ),
           ),
         Container(
@@ -155,8 +121,8 @@ class _WalletScreenState extends State<WalletScreen> {
             padding: const EdgeInsets.all(1),
             child: Image.asset(
               'assets/images/logo_ktr.png',
-              width: 40,
-              height: 40,
+              width: 50,
+              height: 50,
             ),
           ),
         ),

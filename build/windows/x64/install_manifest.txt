@@ -1,9 +1,11 @@
 D:/cryptowallet/build/windows/x64/runner/Debug/data/icudtl.dat
 D:/cryptowallet/build/windows/x64/runner/Debug/flutter_windows.dll
+D:/cryptowallet/build/windows/x64/runner/Debug/bitsdojo_window_windows_plugin.lib
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.bin
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.bin.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/bnb-bnb-logo.png
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/loading.gif
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/login_background.PNG
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/logo_ktr.png
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/sort.svg
@@ -14,4 +16,6 @@ D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/kernel_blob.b
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/NOTICES
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/NOTICES.Z
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/packages/fluttertoast/assets/toastify.css
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/packages/fluttertoast/assets/toastify.js
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/shaders/ink_sparkle.frag
