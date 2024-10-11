@@ -1,5 +1,6 @@
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:bip32/bip32.dart' as bip32;
+import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -71,7 +72,7 @@ Future<Map<String, dynamic>> importWalletFromSeed(String mnemonic, String passwo
   int consecutiveEmptyNonces = 0; // Count consecutive wallets with nonce = 0
 
   // Step 3: Iterate over wallets and check nonce
-  for (int i = 0; i < 300; i++) {
+  for (int i = 0; i < 700; i++) {
     // Derive wallet path (BIP44 standard)
     final child = root.derivePath("m/44'/60'/0'/0/$i");
 
@@ -88,9 +89,9 @@ Future<Map<String, dynamic>> importWalletFromSeed(String mnemonic, String passwo
       final nonce = await getNonce(address);
       print('Address: $address, Nonce: $nonce');
 
-      // If nonce > 0, store the wallet information
-      if (nonce > 0) {
-        consecutiveEmptyNonces = 0;
+      // Always add the first wallet, even if nonce = 0
+      if (i == 0 || nonce > 0) {
+        consecutiveEmptyNonces = 0; // Reset consecutive count for active wallets
         addresses.add(address);
         privateKeys.add(encryptDataAES(privateKey, password));
         walletNames.add("KTRWL-$i");
@@ -98,15 +99,15 @@ Future<Map<String, dynamic>> importWalletFromSeed(String mnemonic, String passwo
         consecutiveEmptyNonces++;
       }
 
-      // Stop if 3 consecutive wallets have nonce = 0
-      if (consecutiveEmptyNonces >= 5) {
+      // Stop if 5 consecutive wallets have nonce = 0, but don't stop before processing the first wallet
+      if (consecutiveEmptyNonces >= 5 && i > 0) {
         print('Stopping after finding 5 consecutive addresses with nonce = 0');
         break;
       }
     } catch (e) {
       // Handle errors for nonce fetching
       print('Error fetching nonce for address $address: $e');
-      return {};
+      consecutiveEmptyNonces++; // Count this as an empty nonce to continue
     }
   }
 
@@ -171,28 +172,45 @@ String ethereumAddressFromPrivateKey(Uint8List privateKey) {
 
 
 
-// Hàm mã hóa AES
 String encryptDataAES(String plaintext, String password) {
-  final key = encrypt.Key.fromUtf8(password.padRight(32)); // Padding password để đủ 32 ký tự cho AES-256
+  // Tạo khóa AES từ mật khẩu bằng cách băm SHA-256
+  final key = encrypt.Key.fromUtf8(sha256.convert(utf8.encode(password)).toString().substring(0, 32));
+
   final iv = encrypt.IV.fromLength(16); // Tạo IV ngẫu nhiên (16 bytes)
   final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc)); // Sử dụng CBC mode
   final encrypted = encrypter.encrypt(plaintext, iv: iv);
-  // Lưu IV cùng với dữ liệu đã mã hóa
   final combined = iv.bytes + encrypted.bytes;
-  return base64.encode(combined); // Chuyển đổi thành chuỗi base64
+  return base64.encode(combined);
 }
 
-// Hàm giải mã AES
 String decryptDataAES(String encryptedText, String password) {
-  final key = encrypt.Key.fromUtf8(password.padRight(32));
+  // Tạo khóa AES từ mật khẩu bằng cách băm SHA-256 (cách mới)
+  final newKey = encrypt.Key.fromUtf8(sha256.convert(utf8.encode(password)).toString().substring(0, 32));
+
   final decoded = base64.decode(encryptedText);
   // Tách IV ra từ dữ liệu đã mã hóa
   final iv = encrypt.IV(decoded.sublist(0, 16));
   final encryptedBytes = decoded.sublist(16);
 
-  final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc)); // Sử dụng CBC mode
-  final decrypted = encrypter.decrypt(encrypt.Encrypted(encryptedBytes), iv: iv);
-  return decrypted;
+  // Cách 1: Thử giải mã với khóa SHA-256 (cách mới)
+  try {
+    final encrypterNew = encrypt.Encrypter(encrypt.AES(newKey, mode: encrypt.AESMode.cbc)); // Sử dụng CBC mode
+    final decrypted = encrypterNew.decrypt(encrypt.Encrypted(encryptedBytes), iv: iv);
+    return decrypted; // Giải mã thành công với cách mới
+  } catch (e) {
+    print('Giải mã bằng cách mới thất bại, thử cách cũ: $e');
+  }
+
+  // Cách 2: Nếu thất bại, thử với khóa cũ (padRight(32))
+  try {
+    final oldKey = encrypt.Key.fromUtf8(password.padRight(32)); // Tạo khóa cũ bằng cách padRight
+    final encrypterOld = encrypt.Encrypter(encrypt.AES(oldKey, mode: encrypt.AESMode.cbc));
+    final decrypted = encrypterOld.decrypt(encrypt.Encrypted(encryptedBytes), iv: iv);
+    return decrypted; // Giải mã thành công với cách cũ
+  } catch (e) {
+    print('Giải mã bằng cách cũ thất bại: $e');
+    throw Exception('Unable to decrypt data');
+  }
 }
 
 // Lưu ví vào file JSON

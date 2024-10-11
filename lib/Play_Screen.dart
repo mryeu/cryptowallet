@@ -208,8 +208,8 @@ class _PlayScreenState extends State<PlayScreen> {
                       child: Card(
                         elevation: 4,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                          side: const BorderSide(color: Colors.green, width: 2),
+                          borderRadius: BorderRadius.circular(10), // Thiết lập BorderRadius là 5
+                          side: const BorderSide(color: Colors.green, width: 1),
                         ),
                         margin: const EdgeInsets.symmetric(vertical: 3),
                         child: Padding(
