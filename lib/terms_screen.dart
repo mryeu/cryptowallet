@@ -1,3 +1,4 @@
+import 'package:cryptowallet/wallet_choice_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'wallet_selector_screen.dart'; // Ensure correct import for navigation
@@ -14,7 +15,7 @@ class _TermsScreenState extends State<TermsScreen> {
 
   Future<void> _acceptTerms() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('acceptedTerms', true);
+    await prefs.setBool('acceptedTerms', true); // Lưu trạng thái đồng ý điều khoản
   }
 
   @override
@@ -22,7 +23,7 @@ class _TermsScreenState extends State<TermsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Terms of Use"),
-        backgroundColor: Colors.green[800], // Optional: set AppBar color
+        centerTitle: true,
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -53,7 +54,7 @@ class _TermsScreenState extends State<TermsScreen> {
                       "8. **Acceptance of Terms**: By using KittyRun Wallet, you acknowledge that you have read, understood, and agreed to these terms. If you do not agree to any of these terms, you should discontinue the use of the wallet immediately.",
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white, // Set text color to white
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -68,12 +69,10 @@ class _TermsScreenState extends State<TermsScreen> {
                       _isChecked = value ?? false;
                     });
                   },
-                  activeColor: Colors.white, // Optional: Change checkbox color
-                  checkColor: Colors.green,  // Change the check color to green
                 ),
                 const Text(
                   "I agree to the terms of use",
-                  style: TextStyle(color: Colors.white), // Set text color to white
+                  style: TextStyle(color: Colors.white),
                 ),
               ],
             ),
@@ -81,16 +80,19 @@ class _TermsScreenState extends State<TermsScreen> {
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[800], // Set button color to dark green
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
                 ),
                 onPressed: _isChecked
-                    ? () async {
-                  await _acceptTerms();
+                    ? () {
+                  _acceptTerms();
+                  // Điều hướng tới màn hình lựa chọn Create hoặc Import
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                        const WalletSelectorScreen()),
+                      builder: (context) => const WalletChoiceScreen(),
+                    ),
                   );
                 }
                     : null,

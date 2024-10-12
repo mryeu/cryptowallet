@@ -38,7 +38,9 @@ class _SwapScreenState extends State<SwapScreen> {
     super.initState();
     _initializeWeb3();
     _loadWalletData();
+    //deleteWalletJson();
   }
+
 
   void _initializeWeb3() {
     const bscUrl = 'https://smart-yolo-wildflower.bsc.quiknode.pro/15e23273e4927b475d4a2b0b40c1231d9c7b7e91';
@@ -289,24 +291,24 @@ class _SwapScreenState extends State<SwapScreen> {
                             if (txReceipt != null && txReceipt.status!) {
                               print("Giao dịch đã được xác nhận thành công!");
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Swap thành công! TX Hash: $txHash')),
+                                SnackBar(content: Text('Swap success! TX Hash: $txHash')),
                               );
                             } else {
                               print("Giao dịch thất bại hoặc mất quá nhiều thời gian.");
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Swap thất bại hoặc mất quá nhiều thời gian!')),
+                                const SnackBar(content: Text('Swap failed or took too long!')),
                               );
                             }
                           } else {
                             print('Gửi giao dịch thất bại.');
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Swap thất bại!')),
+                              const SnackBar(content: Text('Swap failure!')),
                             );
                           }
                         } catch (e) {
                           print('Đã xảy ra lỗi: $e');
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Đã xảy ra lỗi: $e')),
+                            SnackBar(content: Text('An error occurred.: $e')),
                           );
                         }
                       },

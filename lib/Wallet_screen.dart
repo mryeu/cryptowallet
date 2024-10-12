@@ -145,7 +145,15 @@ class _WalletState extends State<Wallet> {
     } else {
       shortAddress = walletAddress;
     }
+    String formatBalance(double value) {
+      // Chuyển đổi số thành chuỗi, giữ lại tối đa 4 chữ số thập phân
+      String formattedValue = value.toStringAsFixed(4);
 
+      // Chuyển lại thành số để loại bỏ các số 0 thừa phía sau nếu có
+      formattedValue = double.parse(formattedValue).toString();
+
+      return formattedValue;
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('KittyRun Wallet'),
@@ -215,7 +223,7 @@ class _WalletState extends State<Wallet> {
                             children: [
                               Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
                               const SizedBox(width: 8),
-                              Text('USDT: $usdtBalance', style: const TextStyle(color: Colors.white)),
+                              Text(formatBalance(usdtBalance), style: const TextStyle(color: Colors.white)),
                             ],
                           ),
                           const SizedBox(width: 5),
@@ -223,7 +231,7 @@ class _WalletState extends State<Wallet> {
                             children: [
                               Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
                               const SizedBox(width: 8),
-                              Text('BNB: $bnbBalance', style: const TextStyle(color: Colors.white)),
+                              Text(formatBalance(bnbBalance), style: const TextStyle(color: Colors.white)),
                             ],
                           ),
                           const SizedBox(width: 5),
@@ -231,7 +239,7 @@ class _WalletState extends State<Wallet> {
                             children: [
                               Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
                               const SizedBox(width: 8),
-                              Text('KTR: $ktrBalance', style: const TextStyle(color: Colors.white)),
+                              Text(formatBalance(ktrBalance), style: const TextStyle(color: Colors.white)),
                             ],
                           ),
                         ],
@@ -386,6 +394,15 @@ class _WalletState extends State<Wallet> {
                   double walletBnbBalance = wallets[index + 1]['bnbBalance'];
                   double walletUsdtBalance = wallets[index + 1]['usdtBalance'];
                   double walletKtrBalance = wallets[index + 1]['ktrBalance'];
+                  String formatBalance(double value) {
+                    // Chuyển đổi số thành chuỗi, giữ lại tối đa 4 chữ số thập phân
+                    String formattedValue = value.toStringAsFixed(4);
+
+                    // Chuyển lại thành số để loại bỏ các số 0 thừa phía sau nếu có
+                    formattedValue = double.parse(formattedValue).toString();
+
+                    return formattedValue;
+                  }
                   String shortAddress = (walletAddress.length > 10)
                       ? '${walletAddress.substring(0, 5)}...${walletAddress.substring(walletAddress.length - 5)}'
                       : walletAddress;
@@ -422,7 +439,7 @@ class _WalletState extends State<Wallet> {
                             children: [
                               Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
                               const SizedBox(width: 4),
-                              Text('$walletBnbBalance'),
+                              Text(formatBalance(walletBnbBalance)),
                             ],
                           ),
                           const SizedBox(width: 10),
@@ -430,7 +447,7 @@ class _WalletState extends State<Wallet> {
                             children: [
                               Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
                               const SizedBox(width: 4),
-                              Text('$walletUsdtBalance'),
+                              Text(formatBalance(walletUsdtBalance)),
                             ],
                           ),
                           const SizedBox(width: 10),
@@ -438,7 +455,7 @@ class _WalletState extends State<Wallet> {
                             children: [
                               Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
                               const SizedBox(width: 4),
-                              Text('$walletKtrBalance'),
+                              Text(formatBalance(walletKtrBalance)),
                             ],
                           ),
                         ],

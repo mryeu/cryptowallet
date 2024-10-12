@@ -22,6 +22,9 @@
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_avfoundation-2.6.1" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_android-2.7.6" />
       <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/video_player-2.9.2" />
+      <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_android-2.4.0" />
+      <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite-2.4.0" />
+      <root url="file://$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/sqflite_darwin-2.4.1-1" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

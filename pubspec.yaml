@@ -51,6 +51,8 @@ dependencies:
   flutter_bloc: ^8.0.1
   equatable: ^2.0.3
   provider: ^6.1.2
+  flutter_cache_manager: ^3.3.0
+
 
 
 

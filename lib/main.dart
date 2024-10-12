@@ -1,5 +1,7 @@
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:cryptowallet/pinScreen.dart';
 import 'package:cryptowallet/services/session_manager.dart';
+import 'package:cryptowallet/terms_screen.dart';
 import 'package:cryptowallet/wallet_create.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,7 +27,7 @@ void main() async {
     debugShowCheckedModeBanner: false,
     home: hasAcceptedTerms
         ? (userPin == null
-        ? const SetupPinScreen() // Redirect to PIN setup if PIN is null
+        ? const SetupPinScreen()
         : (walletData == null ? const WalletSelectorScreen() : const WalletScreen()))
         : const TermsScreen(),
   ));
@@ -41,6 +43,7 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   int _selectedIndex = 2; // Default to Swap tab
   static const List<Widget> _widgetOptions = <Widget>[
+
     HomeScreen(),
     PlayScreen(),
     SwapScreen(),
