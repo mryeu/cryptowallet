@@ -1,18 +1,21 @@
+import 'package:cryptowallet/services/member_service.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart';
 import 'package:flutter/material.dart';
 import 'check_balance.dart';
+import 'modules/member/join_memeber_widget.dart';
 
 class JoinPage extends StatefulWidget {
   @override
-  _JoinPageState createState() => _JoinPageState();
+  JoinPageState createState() => JoinPageState();
 }
 
-class _JoinPageState extends State<JoinPage> {
+class JoinPageState extends State<JoinPage> {
   final TextEditingController sponsorController = TextEditingController();
   List<Map<String, dynamic>> wallets = [];
+  List<bool> walletChecked = [];
   final TokenBalanceChecker _balanceChecker = TokenBalanceChecker();
-  int selectedCount = 0;  // Biến đếm số ví được chọn
+  int selectedCount = 0;
 
   @override
   void initState() {
@@ -23,27 +26,24 @@ class _JoinPageState extends State<JoinPage> {
   // Load wallet data from JSON
   Future<void> _loadWalletData() async {
     try {
-      String? pin = SessionManager.userPin;  // Lấy pin từ SessionManager hoặc nơi lưu trữ khác
-      final walletDataDecrypt = await loadWalletPINFromJson(pin!);  // Gọi hàm load dữ liệu từ JSON
+      String? pin = SessionManager.userPin; // Lấy pin từ SessionManager hoặc nơi lưu trữ khác
+      final walletDataDecrypt = await loadWalletPINFromJson(pin!); // Gọi hàm load dữ liệu từ JSON
       if (walletDataDecrypt != null) {
         setState(() {
-          // Clear existing wallets
           wallets.clear();
-
-          // Read wallet names and addresses from JSON
+          // Đọc tên ví và địa chỉ từ JSON
           if (walletDataDecrypt.containsKey('wallet_names') &&
               walletDataDecrypt.containsKey('addresses')) {
             List<String> walletNames = List<String>.from(walletDataDecrypt['wallet_names']);
             List<String> walletAddresses = List<String>.from(walletDataDecrypt['addresses']);
-
             for (int i = 0; i < walletNames.length; i++) {
               wallets.add({
                 'name': walletNames[i],
                 'address': walletAddresses[i],
                 'bnb_balance': 'Fetching...', // Placeholder for BNB balance
                 'usdt_balance': 'Fetching...', // Placeholder for USDT balance
-                'selected': false,  // Default value for checkbox
               });
+              walletChecked.add(false); // Tất cả checkbox ban đầu là false
             }
           }
 
@@ -56,15 +56,23 @@ class _JoinPageState extends State<JoinPage> {
     }
   }
 
-  // Function to fetch wallet balances
+  // Kiểm tra xem ví có phải là thành viên hay không
+  Future<bool?> isMember(String walletAddress) async {
+    try {
+      bool? result = await MemberService().checkIsMember(walletAddress);
+      return result;
+    } catch (e) {
+      print("Error checking membership status: $e");
+      return false;
+    }
+  }
+
+  // Lấy thông tin số dư
   Future<void> _fetchWalletBalances(List<Map<String, dynamic>> wallets) async {
     for (var wallet in wallets) {
       try {
-        // Fetch BNB balance
         double? bnbBalance = await _balanceChecker.getBnbBalance(wallet['address']);
-        // Fetch USDT balance
         double? usdtBalance = await _balanceChecker.getUsdtBalance(wallet['address']);
-
         setState(() {
           wallet['bnb_balance'] = bnbBalance != null ? bnbBalance.toStringAsFixed(4) : 'Error';
           wallet['usdt_balance'] = usdtBalance != null ? usdtBalance.toStringAsFixed(2) : 'Error';
@@ -75,8 +83,50 @@ class _JoinPageState extends State<JoinPage> {
     }
   }
 
+  // Rút gọn địa chỉ ví
   String _shortenAddress(String address) {
     return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
+  }
+
+  // Hàm gọi onJoinMemberKitty với danh sách ví chưa là thành viên
+  Future<void> _onJoinMember(BuildContext context) async {
+    List<Map<String, dynamic>> selectedWallets = [];
+    for (int i = 0; i < wallets.length; i++) {
+      if (walletChecked[i]) {
+        bool? isAlreadyMember = await isMember(wallets[i]['address']);
+        if (isAlreadyMember == false) {
+          selectedWallets.add(wallets[i]);
+        }
+      }
+    }
+
+    String sponsorWallet = sponsorController.text;
+    if (sponsorWallet.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sponsor wallet cannot be empty.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else if (!RegExp(r"^0x[a-fA-F0-9]{40}$").hasMatch(sponsorWallet)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid sponsor wallet address.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else if (selectedWallets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No wallets selected or all are already members.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      // Gọi hàm onJoinMemberKitty với các ví được chọn chưa là thành viên
+      print('Calling onJoinMemberKitty...');
+      onJoinMemberKitty(context, selectedWallets, sponsorWallet, walletChecked);
+    }
   }
 
   @override
@@ -93,7 +143,6 @@ class _JoinPageState extends State<JoinPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Sponsor Text Field
             const Text(
               'Sponsor:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -110,12 +159,11 @@ class _JoinPageState extends State<JoinPage> {
 
             // Select Wallet Section
             Text(
-              'Select Wallet: $selectedCount/${wallets.length}',  // Hiển thị số ví đã chọn / tổng số ví
+              'Select Wallet: $selectedCount/${wallets.length}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
-            // Wallets List
             Expanded(
               child: ListView.builder(
                 itemCount: wallets.length,
@@ -124,26 +172,24 @@ class _JoinPageState extends State<JoinPage> {
                     margin: const EdgeInsets.symmetric(vertical: 5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: Colors.green, width: 1), // Green border
+                      side: const BorderSide(color: Colors.green, width: 1),
                     ),
                     child: CheckboxListTile(
-                      title: Row( // Sử dụng Row để đặt name và address cùng hàng
+                      title: Row(
                         children: [
-                          // Tên ví
                           Text(
-                            '${wallets[index]['name']}',
+                            wallets[index]['name'],
                             style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 10), // Khoảng cách giữa tên ví và địa chỉ
-                          // Địa chỉ ví
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              _shortenAddress(wallets[index]['address']), // Địa chỉ ví được rút gọn
-                              style: const TextStyle(color: Colors.black54), // Màu xám cho địa chỉ
-                              overflow: TextOverflow.ellipsis,  // Xử lý khi địa chỉ quá dài
+                              _shortenAddress(wallets[index]['address']),
+                              style: const TextStyle(color: Colors.black54),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -152,11 +198,10 @@ class _JoinPageState extends State<JoinPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 5),
-                          // Row for BNB Balance with logo
                           Row(
                             children: [
                               Image.asset(
-                                'assets/images/bnb-bnb-logo.png', // BNB Logo asset
+                                'assets/images/bnb-bnb-logo.png',
                                 width: 24,
                                 height: 24,
                               ),
@@ -165,11 +210,10 @@ class _JoinPageState extends State<JoinPage> {
                             ],
                           ),
                           const SizedBox(height: 5),
-                          // Row for USDT Balance with logo
                           Row(
                             children: [
                               Image.asset(
-                                'assets/images/usdt_logo.png', // USDT Logo asset
+                                'assets/images/usdt_logo.png',
                                 width: 24,
                                 height: 24,
                               ),
@@ -179,11 +223,11 @@ class _JoinPageState extends State<JoinPage> {
                           ),
                         ],
                       ),
-                      value: wallets[index]['selected'],
+                      value: walletChecked[index],
                       onChanged: (bool? value) {
                         setState(() {
-                          wallets[index]['selected'] = value ?? false;
-                          selectedCount = wallets.where((wallet) => wallet['selected'] == true).length; // Cập nhật số ví đã chọn
+                          walletChecked[index] = value ?? false;
+                          selectedCount = walletChecked.where((e) => e).length;
                         });
                       },
                     ),
@@ -200,25 +244,23 @@ class _JoinPageState extends State<JoinPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    // Handle Cancel action
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,  // Nút Cancel màu đỏ
+                    backgroundColor: Colors.red,
                   ),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.white),),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Handle Join Now action
-                    // You can process the selected wallets and sponsor here
+                    _onJoinMember(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
                   child: const Text(
                     'Join Now',
-                    style: TextStyle(color: Colors.white),  // Nút Join Now màu trắng
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ],

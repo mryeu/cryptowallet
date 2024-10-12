@@ -4,6 +4,8 @@ import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:web3dart/web3dart.dart';
 
+import 'build_widget.dart';
+
 class WithdrawScreen extends StatefulWidget {
   const WithdrawScreen({Key? key}) : super(key: key);
 
@@ -75,8 +77,23 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     }
   }
 
+  void showCountdownDialog(BuildContext context, int totalWaitTime) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return CountdownDialog(
+          totalWaitTime: totalWaitTime,
+          onSendComplete: () {
+            Navigator.of(context).pop(); // Đóng dialog khi hoàn tất
+          },
+        );
+      },
+    );
+  }
 
   // This method will handle the withdraw process
+// This method will handle the withdraw process
   Future<void> _performWithdraw() async {
     List<Map<String, dynamic>> selectedWallets = wallets.where((wallet) {
       return _selectedWallets[wallet['address']] == true;
@@ -88,6 +105,13 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       setState(() {
         isLoading = true;
       });
+
+      // Tính toán tổng thời gian xử lý cho tất cả ví (mỗi ví mất 2 giây)
+      int totalWaitTime = selectedWallets.length * 2;
+
+      // Hiển thị CountdownDialog
+      showCountdownDialog(context, totalWaitTime);
+
       // Initialize the transaction service
       TransactionServiceSend action = TransactionServiceSend();
 
@@ -106,9 +130,19 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           }
         } catch (e) {
           print('Error withdrawing from $fromAddress: $e');
-          // Optionally, handle errors or show a message to the user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error withdrawing from $fromAddress: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
         }
+
+        // Tạm dừng 2 giây trước khi xử lý ví tiếp theo
+        await Future.delayed(const Duration(seconds: 2));
       }
+
       setState(() {
         isLoading = false;
       });
@@ -123,6 +157,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

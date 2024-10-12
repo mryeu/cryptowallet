@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Sử dụng flutter_carousel_widget để tạo slideshow
+          const SizedBox(height: 20,),
           FlutterCarousel(
             options: CarouselOptions(
               autoPlay: true,

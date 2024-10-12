@@ -44,15 +44,9 @@ class _SendAllScreenState extends State<SendAllScreen> {
           List<String> walletAddresses = walletDataDecrypt['addresses'];
           List<String> privateKeys = walletDataDecrypt['decrypted_private_keys'];
 
-          // Set the main wallet address (index 0) and get its private key
           mainWalletAddress = walletAddresses[0];
           mainWalletPrivateKey = privateKeys[0]; // Retrieve the private key for the main wallet
-
-          // Store the main wallet private key if needed in the future
-          // You can use this key in other methods for performing transactions or sending tokens
-
-          // Create the wallets list excluding the main wallet (index 0)
-          for (int i = 1; i < walletAddresses.length; i++) {
+      for (int i = 1; i < walletAddresses.length; i++) {
             wallets.add({
               'name': walletNames[i],
               'address': walletAddresses[i],
@@ -285,7 +279,7 @@ class _SendAllScreenState extends State<SendAllScreen> {
                             children: [
                               Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
                               const SizedBox(width: 4),
-                              Text('BNB: $bnbBalance'),
+                              Text('$bnbBalance'),
                             ],
                           ),
                           const SizedBox(width: 10),
@@ -293,7 +287,7 @@ class _SendAllScreenState extends State<SendAllScreen> {
                             children: [
                               Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
                               const SizedBox(width: 4),
-                              Text('USDT: $usdtBalance'),
+                              Text('$usdtBalance'),
                             ],
                           ),
                           const SizedBox(width: 10),
@@ -301,7 +295,7 @@ class _SendAllScreenState extends State<SendAllScreen> {
                             children: [
                               Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
                               const SizedBox(width: 4),
-                              Text('KTR: $ktrBalance'),
+                              Text('$ktrBalance'),
                             ],
                           ),
                         ],
@@ -375,10 +369,10 @@ class _CountdownDialogState extends State<CountdownDialog> {
   void initState() {
     super.initState();
     currentWaitTime = widget.totalWaitTime;
-    _startCountdown();
+    startCountdown();
   }
 
-  void _startCountdown() async {
+  void startCountdown() async {
     while (currentWaitTime > 0) {
       await Future.delayed(const Duration(seconds: 1));
       setState(() {
@@ -411,7 +405,6 @@ class _CountdownDialogState extends State<CountdownDialog> {
             color: Colors.red,
           ),),
           const SizedBox(height: 20),
-          // Thêm ảnh GIF vào đây
           Image.asset(
             'assets/images/loading.gif',
             height: 200, // Điều chỉnh kích thước ảnh GIF tùy ý
