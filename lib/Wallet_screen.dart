@@ -145,6 +145,7 @@ class _WalletState extends State<Wallet> {
     } else {
       shortAddress = walletAddress;
     }
+
     String formatBalance(double value) {
       // Chuyển đổi số thành chuỗi, giữ lại tối đa 4 chữ số thập phân
       String formattedValue = value.toStringAsFixed(4);
@@ -154,328 +155,414 @@ class _WalletState extends State<Wallet> {
 
       return formattedValue;
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('KittyRun Wallet'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.green),
-            onPressed: _showCreateWalletDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.upload_file, color: Colors.green),
-            onPressed: () {
-              print('Import Wallet button clicked');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.green),
-            onPressed: () {
-              print('Settings button clicked');
-            },
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green[600]!, Colors.green[200]!],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+    return WillPopScope(
+      onWillPop: () async {
+        // Trả về false để vô hiệu hóa nút quay lại
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('KittyRun Wallet'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add, color: Colors.green),
+              onPressed: _showCreateWalletDialog,
+            ),
+            IconButton(
+              icon: const Icon(Icons.upload_file, color: Colors.green),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    TextEditingController privateKeyController = TextEditingController();
+
+                    return AlertDialog(
+                      title: const Text("Enter PrivateKey(s)"),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              controller: privateKeyController,
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null, // Cho phép nhiều dòng
+                              decoration: const InputDecoration(
+                                labelText: 'PrivateKey(s)',
+                                hintText: 'Enter one or more PrivateKey(s), separated by lines, commas, semicolons, pipes, or spaces',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the popup
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            String privateKeyInput = privateKeyController.text;
+                            String? pin = SessionManager.userPin; // Get pin from SessionManager
+
+                            if (privateKeyInput.isNotEmpty && pin != null) {
+                              try {
+                                // Sử dụng RegExp để phân tách PrivateKeys theo các ký tự sau: , ; | khoảng trắng và dòng mới
+                                List<String> privateKeyList = privateKeyInput
+                                    .split(RegExp(r'[\n,\s;|]+')) // Tách bằng dòng mới, dấu , ; | hoặc khoảng trắng
+                                    .map((key) => key.trim())   // Loại bỏ khoảng trắng thừa
+                                    .where((key) => key.isNotEmpty) // Loại bỏ các chuỗi rỗng
+                                    .toList();
+
+                                // Gọi hàm importMultiPrivateKeys với danh sách private key
+                                await importMultiPrivateKeys(privateKeyList, pin);
+                                await _loadWalletData(); // Reload wallet data
+
+                                // Hiển thị Snackbar thông báo thành công
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Wallet(s) imported successfully!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                // Hiển thị Snackbar thông báo lỗi
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to import wallet(s): $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('PrivateKey is empty or PIN is not available'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            }
+                            Navigator.of(context).pop(); // Close the popup
+                          },
+                          child: const Text("Confirm"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.green),
+              onPressed: () {
+                print('Settings button clicked');
+              },
+            ),
+            const SizedBox(width: 10),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Main Wallet',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Text('Address: $shortAddress', style: const TextStyle(color: Colors.white)),
-                          IconButton(
-                            icon: const Icon(Icons.copy, color: Colors.white),
-                            onPressed: () => copyToClipboard(walletAddress),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
-                              const SizedBox(width: 8),
-                              Text(formatBalance(usdtBalance), style: const TextStyle(color: Colors.white)),
-                            ],
-                          ),
-                          const SizedBox(width: 5),
-                          Row(
-                            children: [
-                              Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
-                              const SizedBox(width: 8),
-                              Text(formatBalance(bnbBalance), style: const TextStyle(color: Colors.white)),
-                            ],
-                          ),
-                          const SizedBox(width: 5),
-                          Row(
-                            children: [
-                              Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
-                              const SizedBox(width: 8),
-                              Text(formatBalance(ktrBalance), style: const TextStyle(color: Colors.white)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                print('Send All clicked');
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SendAllScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text('SendAll', style: TextStyle(fontSize:10,color: Colors.white)),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.green[600]!, Colors.green[200]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Main Wallet',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Text('Address: $shortAddress', style: const TextStyle(color: Colors.white)),
+                            IconButton(
+                              icon: const Icon(Icons.copy, color: Colors.white),
+                              onPressed: () => copyToClipboard(walletAddress),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const WithdrawScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text('WithdrawAll', style: TextStyle(fontSize:10, color: Colors.white)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
+                                const SizedBox(width: 8),
+                                Text(formatBalance(usdtBalance), style: const TextStyle(color: Colors.white)),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10.0),
-                                        side: const BorderSide(color: Colors.green, width: 2),
-                                      ),
-                                      title: const Center(
-                                        child: Text(
-                                          "Deposit",
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20,
+                            const SizedBox(width: 5),
+                            Row(
+                              children: [
+                                Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
+                                const SizedBox(width: 8),
+                                Text(formatBalance(bnbBalance), style: const TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                            const SizedBox(width: 5),
+                            Row(
+                              children: [
+                                Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
+                                const SizedBox(width: 8),
+                                Text(formatBalance(ktrBalance), style: const TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  print('Send All clicked');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const SendAllScreen(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text('SendAll', style: TextStyle(fontSize:10, color: Colors.white)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const WithdrawScreen(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text('WithdrawAll', style: TextStyle(fontSize:10, color: Colors.white)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          side: const BorderSide(color: Colors.green, width: 2),
+                                        ),
+                                        title: const Center(
+                                          child: Text(
+                                            "Deposit",
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 20,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      content: SingleChildScrollView(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Text('Scan this QR code to deposit to your wallet:'),
-                                            const SizedBox(height: 20),
-                                            SizedBox(
-                                              width: 200,
-                                              height: 200,
-                                              child: QrImageView(
-                                                data: walletAddress,
-                                                version: QrVersions.auto,
-                                                size: 200.0,
-                                                embeddedImage: const AssetImage('assets/images/logo_ktr.png'),
-                                                embeddedImageStyle: const QrEmbeddedImageStyle(
-                                                  size: Size(40, 40),
+                                        content: SingleChildScrollView(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text('Scan this QR code to deposit to your wallet:'),
+                                              const SizedBox(height: 20),
+                                              SizedBox(
+                                                width: 200,
+                                                height: 200,
+                                                child: QrImageView(
+                                                  data: walletAddress,
+                                                  version: QrVersions.auto,
+                                                  size: 200.0,
+                                                  embeddedImage: const AssetImage('assets/images/logo_ktr.png'),
+                                                  embeddedImageStyle: const QrEmbeddedImageStyle(
+                                                    size: Size(40, 40),
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            GestureDetector(
-                                              onTap: () {
-                                                Clipboard.setData(ClipboardData(text: walletAddress));
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Address copied to clipboard')),
-                                                );
-                                              },
-                                              child: SelectableText(
-                                                walletAddress,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
+                                              const SizedBox(height: 20),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  Clipboard.setData(ClipboardData(text: walletAddress));
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Address copied to clipboard')),
+                                                  );
+                                                },
+                                                child: SelectableText(
+                                                  walletAddress,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () async {
-                                            Navigator.of(context).pop();
-                                            await _loadWalletData();
-                                            setState(() {});
-                                          },
-                                          child: const Text(
-                                            'Close',
-                                            style: TextStyle(color: Colors.green),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () async {
+                                              Navigator.of(context).pop();
+                                              await _loadWalletData();
+                                              setState(() {});
+                                            },
+                                            child: const Text(
+                                              'Close',
+                                              style: TextStyle(color: Colors.green),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
+                                child: const Text('Deposit', style: TextStyle(fontSize:10, color: Colors.white)),
                               ),
-                              child: const Text('Deposit', style: TextStyle(fontSize:10,color: Colors.white)),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Wallets list excluding the main wallet
-            Expanded(
-              child: ListView.builder(
-                itemCount: wallets.length > 1 ? wallets.length - 1 : 0,
-                itemBuilder: (BuildContext context, int index) {
-                  String walletName = wallets[index + 1]['name'];
-                  String walletAddress = wallets[index + 1]['address'];
-                  double walletBnbBalance = wallets[index + 1]['bnbBalance'];
-                  double walletUsdtBalance = wallets[index + 1]['usdtBalance'];
-                  double walletKtrBalance = wallets[index + 1]['ktrBalance'];
-                  String formatBalance(double value) {
-                    // Chuyển đổi số thành chuỗi, giữ lại tối đa 4 chữ số thập phân
-                    String formattedValue = value.toStringAsFixed(4);
+              // Wallets list excluding the main wallet
+              Expanded(
+                child: ListView.builder(
+                  itemCount: wallets.length > 1 ? wallets.length - 1 : 0,
+                  itemBuilder: (BuildContext context, int index) {
+                    String walletName = wallets[index + 1]['name'];
+                    String walletAddress = wallets[index + 1]['address'];
+                    double walletBnbBalance = wallets[index + 1]['bnbBalance'];
+                    double walletUsdtBalance = wallets[index + 1]['usdtBalance'];
+                    double walletKtrBalance = wallets[index + 1]['ktrBalance'];
+                    String formatBalance(double value) {
+                      // Chuyển đổi số thành chuỗi, giữ lại tối đa 4 chữ số thập phân
+                      String formattedValue = value.toStringAsFixed(4);
 
-                    // Chuyển lại thành số để loại bỏ các số 0 thừa phía sau nếu có
-                    formattedValue = double.parse(formattedValue).toString();
+                      // Chuyển lại thành số để loại bỏ các số 0 thừa phía sau nếu có
+                      formattedValue = double.parse(formattedValue).toString();
 
-                    return formattedValue;
-                  }
-                  String shortAddress = (walletAddress.length > 10)
-                      ? '${walletAddress.substring(0, 5)}...${walletAddress.substring(walletAddress.length - 5)}'
-                      : walletAddress;
+                      return formattedValue;
+                    }
+                    String shortAddress = (walletAddress.length > 10)
+                        ? '${walletAddress.substring(0, 5)}...${walletAddress.substring(walletAddress.length - 5)}'
+                        : walletAddress;
 
-                  return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: Colors.green, width: 1),
-                    ),
-                    child: ListTile(
-                      title: Row(
-                        children: [
-                          Text(
-                            walletName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                    return Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(color: Colors.green, width: 1),
+                      ),
+                      child: ListTile(
+                        title: Row(
+                          children: [
+                            Text(
+                              walletName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 5),
-                          Flexible(
-                            child: Text(
-                              shortAddress,
-                              style: const TextStyle(color: Colors.grey),
-                              overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                shortAddress,
+                                style: const TextStyle(color: Colors.grey),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Row(
+                              children: [
+                                Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
+                                const SizedBox(width: 4),
+                                Text(formatBalance(walletBnbBalance)),
+                              ],
+                            ),
+                            const SizedBox(width: 10),
+                            Row(
+                              children: [
+                                Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
+                                const SizedBox(width: 4),
+                                Text(formatBalance(walletUsdtBalance)),
+                              ],
+                            ),
+                            const SizedBox(width: 10),
+                            Row(
+                              children: [
+                                Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
+                                const SizedBox(width: 4),
+                                Text(formatBalance(walletKtrBalance)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.info),
+                          onPressed: () {
+                            showWalletDetails(walletName);
+                          },
+                        ),
                       ),
-                      subtitle: Row(
-                        children: [
-                          Row(
-                            children: [
-                              Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
-                              const SizedBox(width: 4),
-                              Text(formatBalance(walletBnbBalance)),
-                            ],
-                          ),
-                          const SizedBox(width: 10),
-                          Row(
-                            children: [
-                              Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
-                              const SizedBox(width: 4),
-                              Text(formatBalance(walletUsdtBalance)),
-                            ],
-                          ),
-                          const SizedBox(width: 10),
-                          Row(
-                            children: [
-                              Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
-                              const SizedBox(width: 4),
-                              Text(formatBalance(walletKtrBalance)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.info),
-                        onPressed: () {
-                          showWalletDetails(walletName);
-                        },
-                      ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
 
   // Function to show full-screen wallet details
   void showWalletDetails(String walletName) {

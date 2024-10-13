@@ -294,11 +294,101 @@ Future<Map<String, dynamic>?> loadWalletPINFromJson(String pin) async {
     return null;
   }
 }
+
+Future<Map<String, dynamic>> importMultiPrivateKeys(List<String> privateKeys, String password) async {
+  try {
+    // Tải dữ liệu ví hiện tại từ file JSON
+    final existingWalletData = await loadWalletFromJson();
+
+    List<String> encryptedPrivateKeys = [];
+    List<String> addresses = [];
+    List<String> walletNames = [];
+
+    // Nếu đã có dữ liệu ví, lấy danh sách private keys, addresses, và wallet names
+    if (existingWalletData != null) {
+      encryptedPrivateKeys = List<String>.from(existingWalletData['encrypted_private_keys']);
+      addresses = List<String>.from(existingWalletData['addresses']);
+      walletNames = List<String>.from(existingWalletData['wallet_names']);
+    }
+
+    // Đếm số ví được thêm thành công
+    int addedWalletsCount = 0;
+
+    for (String privateKey in privateKeys) {
+      try {
+        // Chuyển đổi private key từ hex sang Uint8List
+        final Uint8List privateKeyBytes = Uint8List.fromList(HEX.decode(privateKey));
+
+        // Kiểm tra độ dài private key (Ethereum private key luôn có độ dài 32 bytes)
+        if (privateKeyBytes.length != 32) {
+          print('Private key invalid: $privateKey');
+          continue;
+        }
+
+        // Tạo Ethereum credentials từ private key
+        final credentials = EthPrivateKey.fromHex(privateKey);
+
+        // Lấy địa chỉ ví từ private key
+        final ethAddress = await credentials.extractAddress();
+        print('Địa chỉ ví từ private key: $ethAddress');
+
+        // Kiểm tra xem địa chỉ đã tồn tại trong danh sách addresses chưa
+        if (addresses.contains(ethAddress.hex)) {
+          print('Address $ethAddress already exists in wallet. Skipping...');
+          continue;
+        }
+
+        // Mã hóa private key với password
+        final String encryptedPrivateKey = encryptDataAES(privateKey, password);
+
+        // Thêm private key và địa chỉ vào danh sách
+        encryptedPrivateKeys.add(encryptedPrivateKey);
+        addresses.add(ethAddress.hex);
+
+        // Đặt tên ví mới theo mẫu "KTRWL-{index}"
+        final int walletIndex = encryptedPrivateKeys.length - 1; // Số thứ tự của ví mới
+        final String walletName = "KTRWL-$walletIndex";
+        walletNames.add(walletName);
+
+        addedWalletsCount++; // Tăng số đếm ví được thêm thành công
+      } catch (e) {
+        print("Lỗi khi import private key: $e");
+        continue;
+      }
+    }
+
+    // Nếu không có ví nào được thêm, in ra thông báo
+    if (addedWalletsCount == 0) {
+      print('No new wallets were added.');
+      return existingWalletData ?? {};
+    }
+
+    // Tạo dữ liệu ví mới
+    final walletData = {
+      'encrypted_mnemonic': existingWalletData?['encrypted_mnemonic'] ?? '', // Nếu đã có mnemonic trước đó, giữ nguyên
+      'encrypted_private_keys': encryptedPrivateKeys,
+      'addresses': addresses,
+      'wallet_names': walletNames,
+    };
+
+    // Lưu dữ liệu ví mới vào file JSON
+    await saveWalletToJson(walletData);
+    print('Ví từ nhiều private key đã được lưu thành công');
+
+    return walletData;
+
+  } catch (e) {
+    print("Lỗi khi import nhiều private key: $e");
+    throw Exception('Import failed');
+  }
+}
+
+
 // Hàm tạo nhiều ví từ 12 từ mnemonic có sẵn
 Future<Map<String, dynamic>> addNewWalletFromMnemonic(String mnemonic, String password) async {
   // Kiểm tra mnemonic có hợp lệ không
   if (!bip39.validateMnemonic(mnemonic)) {
-    throw Exception('Mnemonic không hợp lệ');
+    throw Exception('Mnemonic Invalid');
   }
 
   // Tải dữ liệu ví hiện tại từ file JSON (nếu có)
@@ -426,6 +516,8 @@ Future<Map<String, dynamic>> importWalletFromPrivateKey(String privateKey, Strin
     throw Exception('Import ví thất bại');
   }
 }
+
+
 
 
 // Hàm backup ví cho phép người dùng chọn đường dẫn để lưu tệp trên Windows

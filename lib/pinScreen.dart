@@ -40,16 +40,29 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
       return;
     }
 
-    bool exists = await _walletExistsInStorage();
-    setState(() {
-      _walletExists = exists;
-      if (exists) {
+    // Kiểm tra cờ `wallet_created` trong SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    bool walletCreated = prefs.getBool('wallet_created') ?? false;
+
+    if (walletCreated) {
+      setState(() {
+        _walletExists = true;
         _message = "Enter Your PIN to Unlock Wallet";
-      } else {
-        _message = "Enter Your PIN to Create New Wallet";  // Nếu không có gì, yêu cầu tạo ví mới
-      }
-    });
+      });
+    } else {
+      // Nếu cờ chưa được tạo, kiểm tra tệp ví (nếu cần)
+      bool exists = await _walletExistsInStorage();
+      setState(() {
+        _walletExists = exists;
+        if (exists) {
+          _message = "Enter Your PIN to Unlock Wallet";
+        } else {
+          _message = "Enter Your PIN to Create New Wallet";  // Nếu không có gì, yêu cầu tạo ví mới
+        }
+      });
+    }
   }
+
 
   // Kiểm tra xem tệp wallet.json có tồn tại không
   Future<bool> _walletExistsInStorage() async {
@@ -91,7 +104,6 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
       }
     });
   }
-
   // Xác nhận hoặc mở ví nếu đã tồn tại
   void _handlePinConfirmation() async {
     if (_enteredPin == _firstPin) {
@@ -139,6 +151,10 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
       _hideLoadingDialog();
 
       if (walletData != null) {
+        // Lưu trạng thái ví đã được tạo trong SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('wallet_created', true);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const WalletScreen()),
@@ -151,6 +167,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
       _resetPinEntry("Failed to create wallet. Try again.");
     }
   }
+
 
   // Khôi phục ví từ mnemonic
   Future<void> _importWalletWithPin(String pin) async {
