@@ -28,9 +28,7 @@ com.multichain.wallet.crypto.cryptowallet.app-resValues-26 D:\cryptowallet\build
 com.multichain.wallet.crypto.cryptowallet.app-packageDebugResources-27 D:\cryptowallet\build\app\intermediates\incremental\debug\packageDebugResources\merged.dir
 com.multichain.wallet.crypto.cryptowallet.app-packageDebugResources-28 D:\cryptowallet\build\app\intermediates\incremental\debug\packageDebugResources\stripped.dir
 com.multichain.wallet.crypto.cryptowallet.app-merged_res-29 D:\cryptowallet\build\app\intermediates\merged_res\debug
-com.multichain.wallet.crypto.cryptowallet.app-packaged_res-30 D:\cryptowallet\build\file_picker\intermediates\packaged_res\debug
-com.multichain.wallet.crypto.cryptowallet.app-packaged_res-31 D:\cryptowallet\build\flutter_plugin_android_lifecycle\intermediates\packaged_res\debug
-com.multichain.wallet.crypto.cryptowallet.app-packaged_res-32 D:\cryptowallet\build\fluttertoast\intermediates\packaged_res\debug
-com.multichain.wallet.crypto.cryptowallet.app-packaged_res-33 D:\cryptowallet\build\path_provider_android\intermediates\packaged_res\debug
-com.multichain.wallet.crypto.cryptowallet.app-packaged_res-34 D:\cryptowallet\build\shared_preferences_android\intermediates\packaged_res\debug
-com.multichain.wallet.crypto.cryptowallet.app-packaged_res-35 D:\cryptowallet\build\video_player_android\intermediates\packaged_res\debug
+com.multichain.wallet.crypto.cryptowallet.app-packaged_res-30 D:\cryptowallet\build\path_provider_android\intermediates\packaged_res\debug
+com.multichain.wallet.crypto.cryptowallet.app-packaged_res-31 D:\cryptowallet\build\shared_preferences_android\intermediates\packaged_res\debug
+com.multichain.wallet.crypto.cryptowallet.app-packaged_res-32 D:\cryptowallet\build\sqflite_android\intermediates\packaged_res\debug
+com.multichain.wallet.crypto.cryptowallet.app-packaged_res-33 D:\cryptowallet\build\video_player_android\intermediates\packaged_res\debug

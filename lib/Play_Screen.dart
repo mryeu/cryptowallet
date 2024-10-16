@@ -2,11 +2,14 @@ import 'package:cryptowallet/play_group.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'WalletDetailsPage.dart';
 import 'check_balance.dart';
 import 'claim_swap_play_group.dart';
 import 'join_group.dart';
+import 'modules/member/blocs/claim_swap_play_bloc.dart';
+import 'modules/member/claim_swap_play_widget.dart';
 
 class PlayScreen extends StatefulWidget {
   const PlayScreen({super.key});
@@ -165,7 +168,12 @@ class _PlayScreenState extends State<PlayScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ClaimSwapPlayGroupPage()),
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider(
+                            create: (context) => ClaimSwapPlayBloc(),
+                            child: ClaimSwapPlayGroupPage(),
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.swap_horiz),
@@ -175,6 +183,7 @@ class _PlayScreenState extends State<PlayScreen> {
                       backgroundColor: Colors.green,
                     ),
                   ),
+
                 ],
               ),
               const SizedBox(height: 20),

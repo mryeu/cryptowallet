@@ -63,7 +63,7 @@ Future<String?> buySellTokenKTR({
     }
 
     // Số lượng token KTR hoặc USDT (đơn vị wei)
-    final tokenAmount = BigInt.from(inputNumber) * BigInt.from(10).pow(18); // inputNumber theo đơn vị "ether"
+    final tokenAmount = BigInt.from(inputNumber) * BigInt.from(10).pow(18);
     final slippage = BigInt.from(1000);
 
     // Lấy nonce của giao dịch
@@ -81,7 +81,7 @@ Future<String?> buySellTokenKTR({
       parameters: [contractAddress, tokenAmount],
       from: EthereumAddress.fromHex(walletAddress),
       gasPrice: await web3.getGasPrice(),
-      maxGas: 100000, // Cung cấp đủ gas cho approve
+      maxGas: 100000,
       nonce: nonce,
     );
 
@@ -90,8 +90,8 @@ Future<String?> buySellTokenKTR({
     final approveTxHash = await web3.sendRawTransaction(approveSignedTransaction);
     print("Approve transaction successful with hash: $approveTxHash");
 
-    // Chờ 7 giây trước khi thực hiện giao dịch swap
-    await Future.delayed(Duration(seconds: 5));
+    // Chờ giao dịch approve được xử lý
+    await _waitForTransactionReceipt(web3, approveTxHash);
 
     // Ước lượng gas cho giao dịch swap
     final function = contract.function('Swap');
@@ -109,8 +109,8 @@ Future<String?> buySellTokenKTR({
       parameters: [tokenAmount, slippage, tokenAAddress, tokenBAddress],
       from: EthereumAddress.fromHex(walletAddress),
       gasPrice: gasPrice,
-      maxGas: gasEstimate.toInt() + 100000, // Cộng thêm một lượng gas dự phòng
-      nonce: nonce + 1, // Nonce tăng thêm 1 sau giao dịch approve
+      maxGas: gasEstimate.toInt() + 100000,
+      nonce: nonce + 1,
     );
 
     // Ký và gửi giao dịch swap
@@ -118,23 +118,28 @@ Future<String?> buySellTokenKTR({
     final txHash = await web3.sendRawTransaction(swapSignedTransaction);
     print("Swap transaction successful with hash: $txHash");
 
-    // Đợi kết quả
-    final maxTries = 10;
-    for (int i = 0; i < maxTries; i++) {
-      final txReceipt = await web3.getTransactionReceipt(txHash);
-      if (txReceipt != null && txReceipt.status!) {
-        print("Transaction mined with success");
-        return txHash;
-      } else {
-        print("Waiting for transaction to be mined... Attempt ${i + 1}/$maxTries");
-        await Future.delayed(const Duration(seconds: 3)); // Chờ 5 giây trước khi kiểm tra lại
-      }
-    }
+    // Đợi kết quả giao dịch swap
+    await _waitForTransactionReceipt(web3, txHash);
 
-    print("Transaction failed or timed out");
-    return null;
+    return txHash;
   } catch (e) {
     print("An error occurred: $e");
     return null;
   }
+}
+
+// Hàm chờ giao dịch được xử lý
+Future<void> _waitForTransactionReceipt(Web3Client web3, String txHash) async {
+  final maxTries = 10;
+  for (int i = 0; i < maxTries; i++) {
+    final txReceipt = await web3.getTransactionReceipt(txHash);
+    if (txReceipt != null && txReceipt.status!) {
+      print("Transaction mined with success");
+      return;
+    } else {
+      print("Waiting for transaction to be mined... Attempt ${i + 1}/$maxTries");
+      await Future.delayed(const Duration(seconds: 3)); // Chờ 3 giây trước khi kiểm tra lại
+    }
+  }
+  throw Exception("Transaction failed or timed out");
 }

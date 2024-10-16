@@ -16,6 +16,4 @@ D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/kernel_blob.b
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/NOTICES
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/NOTICES.Z
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
-D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/packages/fluttertoast/assets/toastify.css
-D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/packages/fluttertoast/assets/toastify.js
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/shaders/ink_sparkle.frag

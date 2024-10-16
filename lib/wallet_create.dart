@@ -10,7 +10,6 @@ import 'dart:typed_data';
 import 'package:web3dart/crypto.dart';
 import 'package:hex/hex.dart';
 import 'package:web3dart/web3dart.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:pointycastle/export.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Import compute for heavy operations
@@ -552,24 +551,6 @@ Future<void> backupWallet(String password, BuildContext context) async {
       'wallet_names': walletData['wallet_names'],
     };
 
-    // Sử dụng file_picker để chọn đường dẫn lưu file
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-
-    if (selectedDirectory == null) {
-      // Người dùng không chọn đường dẫn hoặc đóng trình chọn file
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No directory selected.")),
-      );
-      return;
-    }
-
-    // Tạo file backup tại đường dẫn đã chọn
-    final backupFile = File('$selectedDirectory/wallet_backup.json');
-    await backupFile.writeAsString(jsonEncode(backupData));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Wallet backup saved as ${backupFile.path}")),
-    );
 
   } catch (e) {
     // Nếu mật khẩu không đúng hoặc lỗi trong quá trình giải mã

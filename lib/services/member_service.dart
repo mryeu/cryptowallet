@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:math';
 
 import '../swap_ktr_usdt.dart'; // Import for using the pow function
@@ -275,14 +273,7 @@ class MemberService {
           .of(context)
           .platform == TargetPlatform.android) {
         // Show toast on mobile platforms
-        Fluttertoast.showToast(
-          msg: "Error occurred: $e",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
+
       } else {
         // Fallback for desktop (macOS/Windows) using SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
@@ -689,15 +680,7 @@ class MemberService {
 
   void showTopToast(String message, bool success) {
   try {
-    Fluttertoast.showToast(
-        msg: "This is Center Short Toast",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
+
   } catch(e) {
     print('error toast $e');
   }
