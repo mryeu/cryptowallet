@@ -16,6 +16,7 @@ class JoinPageState extends State<JoinPage> {
   List<bool> walletChecked = [];
   final TokenBalanceChecker _balanceChecker = TokenBalanceChecker();
   int selectedCount = 0;
+  bool isLoading = true; // Thêm biến để quản lý trạng thái loading
 
   @override
   void initState() {
@@ -29,30 +30,43 @@ class JoinPageState extends State<JoinPage> {
       String? pin = SessionManager.userPin; // Lấy pin từ SessionManager hoặc nơi lưu trữ khác
       final walletDataDecrypt = await loadWalletPINFromJson(pin!); // Gọi hàm load dữ liệu từ JSON
       if (walletDataDecrypt != null) {
-        setState(() {
-          wallets.clear();
-          // Đọc tên ví và địa chỉ từ JSON
-          if (walletDataDecrypt.containsKey('wallet_names') &&
-              walletDataDecrypt.containsKey('addresses')) {
-            List<String> walletNames = List<String>.from(walletDataDecrypt['wallet_names']);
-            List<String> walletAddresses = List<String>.from(walletDataDecrypt['addresses']);
-            for (int i = 0; i < walletNames.length; i++) {
-              wallets.add({
+        List<Map<String, dynamic>> loadedWallets = [];
+        // Đọc tên ví và địa chỉ từ JSON
+        if (walletDataDecrypt.containsKey('wallet_names') &&
+            walletDataDecrypt.containsKey('addresses')) {
+          List<String> walletNames = List<String>.from(walletDataDecrypt['wallet_names']);
+          List<String> walletAddresses = List<String>.from(walletDataDecrypt['addresses']);
+          List<String> privateKeys = List<String>.from(walletDataDecrypt['decrypted_private_keys']);
+
+          // Kiểm tra trạng thái thành viên của từng ví
+          for (int i = 0; i < walletNames.length; i++) {
+            bool? isMemberStatus = await isMember(walletAddresses[i]);
+            if (!isMemberStatus!) {  // Nếu không phải là thành viên thì thêm vào danh sách
+              loadedWallets.add({
                 'name': walletNames[i],
                 'address': walletAddresses[i],
+                'privateKey': privateKeys[i],
                 'bnb_balance': 'Fetching...', // Placeholder for BNB balance
                 'usdt_balance': 'Fetching...', // Placeholder for USDT balance
               });
               walletChecked.add(false); // Tất cả checkbox ban đầu là false
             }
           }
-
-          // Fetch wallet balances
-          _fetchWalletBalances(wallets);
+        }
+        // Cập nhật danh sách ví chưa là thành viên vào state và dừng trạng thái loading
+        setState(() {
+          wallets = loadedWallets;
+          isLoading = false; // Tắt trạng thái loading sau khi dữ liệu đã được tải
         });
+
+        // Fetch wallet balances cho các ví chưa là thành viên
+        _fetchWalletBalances(wallets);
       }
     } catch (e) {
       print('Failed to load wallet data: $e');
+      setState(() {
+        isLoading = false; // Dừng loading ngay cả khi có lỗi
+      });
     }
   }
 
@@ -88,7 +102,7 @@ class JoinPageState extends State<JoinPage> {
     return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
   }
 
-  // Hàm gọi onJoinMemberKitty với danh sách ví chưa là thành viên
+
   Future<void> _onJoinMember(BuildContext context) async {
     List<Map<String, dynamic>> selectedWallets = [];
     for (int i = 0; i < wallets.length; i++) {
@@ -123,11 +137,17 @@ class JoinPageState extends State<JoinPage> {
         ),
       );
     } else {
-      // Gọi hàm onJoinMemberKitty với các ví được chọn chưa là thành viên
+      // Chuyển đổi danh sách selectedWallets từ Map<String, dynamic> sang Map<String, String>
+      List<Map<String, String>> convertedWallets = selectedWallets.map((wallet) {
+        return wallet.map((key, value) => MapEntry(key, value.toString()));
+      }).toList();
+
+      // Gọi hàm onJoinMemberKitty với các ví đã chuyển đổi
       print('Calling onJoinMemberKitty...');
-      onJoinMemberKitty(context, selectedWallets, sponsorWallet, walletChecked);
+      onJoinMemberKitty(context, convertedWallets, sponsorWallet, walletChecked);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +174,31 @@ class JoinPageState extends State<JoinPage> {
                 border: OutlineInputBorder(),
                 hintText: 'Enter Sponsor',
               ),
+              onChanged: (value) {
+                // Kiểm tra nếu URL chứa "https://" hoặc "kittyrun.io"
+                if (value.contains('https://') || value.contains('kittyrun.io')) {
+                  // Tách chuỗi tại dấu '=' và lấy phần sau dấu '='
+                  final parts = value.split('=');
+                  if (parts.length > 1 && parts[1].isNotEmpty) {
+                    // Nếu có phần địa chỉ ví sau dấu "="
+                    final address = parts[1];
+                    // Cập nhật giá trị vào sponsorController với địa chỉ sau dấu '='
+                    sponsorController.text = address;
+                    sponsorController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: sponsorController.text.length),
+                    );
+                  } else {
+                    // Nếu không có địa chỉ sau dấu "=" (ví dụ "kittyrun.io/?ref=")
+                    // Hiển thị thông báo hoặc bỏ qua việc cập nhật
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Invalid or empty sponsor address.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
             ),
             const SizedBox(height: 20),
 
@@ -164,8 +209,11 @@ class JoinPageState extends State<JoinPage> {
             ),
             const SizedBox(height: 10),
 
+            // Hiển thị trạng thái Loading nếu danh sách đang được tải
             Expanded(
-              child: ListView.builder(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator()) // Hiển thị loading khi dữ liệu đang được tải
+                  : ListView.builder(
                 itemCount: wallets.length,
                 itemBuilder: (context, index) {
                   return Card(
@@ -271,3 +319,4 @@ class JoinPageState extends State<JoinPage> {
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'package:cryptowallet/play_group.dart';
+import 'package:cryptowallet/services/member_service.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'check_balance.dart';
 import 'claim_swap_play_group.dart';
 import 'join_group.dart';
 import 'modules/member/blocs/claim_swap_play_bloc.dart';
+import 'modules/member/blocs/join_member_bloc.dart';
 import 'modules/member/claim_swap_play_widget.dart';
 
 class PlayScreen extends StatefulWidget {
@@ -55,13 +57,15 @@ class _PlayScreenState extends State<PlayScreen> {
                 'address': walletAddresses[i],
                 'bnb_balance': 'Fetching...', // Placeholder for BNB balance
                 'usdt_balance': 'Fetching...', // Placeholder for USDT balance
+                'isMember': false, // Thêm isMember để kiểm tra
               });
               walletFilterOptions.add(walletNames[i]);
             }
           }
 
-          // Fetch wallet balances
+          // Fetch wallet balances and check membership status
           _fetchWalletBalances(wallets);
+          _checkWalletMembership(wallets); // Kiểm tra trạng thái thành viên
         });
       }
     } catch (e) {
@@ -85,6 +89,16 @@ class _PlayScreenState extends State<PlayScreen> {
       } catch (e) {
         print('Error fetching wallet balances: $e');
       }
+    }
+  }
+
+  // Function to check membership status for each wallet
+  Future<void> _checkWalletMembership(List<Map<String, dynamic>> wallets) async {
+    for (var wallet in wallets) {
+      bool? isMember = await MemberService().checkIsMember(wallet['address']);
+      setState(() {
+        wallet['isMember'] = isMember ?? false;
+      });
     }
   }
 
@@ -139,7 +153,12 @@ class _PlayScreenState extends State<PlayScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => JoinPage()),
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider(
+                            create: (context) => JoinMemberBloc(), // Khởi tạo Bloc ở đây
+                            child: JoinPage(),
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.group_add),
@@ -150,11 +169,17 @@ class _PlayScreenState extends State<PlayScreen> {
                     ),
                   ),
 
+
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => PlayGroupPage()),
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider(
+                            create: (context) => JoinMemberBloc(),
+                            child: PlayGroupPage(),
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.play_arrow),
@@ -210,6 +235,9 @@ class _PlayScreenState extends State<PlayScreen> {
                       return Container(); // Skip rendering this wallet
                     }
                     return GestureDetector(
+                      onLongPress: () {
+                        _showWalletOptions(context, wallets[index]);
+                      },
                       onTap: () {
                         // Show full-screen popup when wallet is tapped
                         showFullScreenModal(context, wallets[index]);
@@ -217,7 +245,7 @@ class _PlayScreenState extends State<PlayScreen> {
                       child: Card(
                         elevation: 4,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10), // Thiết lập BorderRadius là 5
+                          borderRadius: BorderRadius.circular(10),
                           side: const BorderSide(color: Colors.green, width: 1),
                         ),
                         margin: const EdgeInsets.symmetric(vertical: 3),
@@ -263,16 +291,20 @@ class _PlayScreenState extends State<PlayScreen> {
                                   ),
                                   // Spacer to push the button to the right
                                   const Spacer(),
-                                  // Join button aligned to the right
+                                  // Check if the wallet is a member to show the appropriate button
                                   ElevatedButton(
-                                    onPressed: () {
+                                    onPressed: wallets[index]['isMember']
+                                        ? () {
+                                      // Handle Auto Play action for this wallet
+                                    }
+                                        : () {
                                       // Handle Join action for this wallet
                                     },
                                     style: ElevatedButton.styleFrom(
                                       foregroundColor: Colors.white,
                                       backgroundColor: Colors.green,
                                     ),
-                                    child: const Text('Join'),
+                                    child: Text(wallets[index]['isMember'] ? 'Auto Play' : 'Join'),
                                   ),
                                 ],
                               ),
@@ -292,6 +324,37 @@ class _PlayScreenState extends State<PlayScreen> {
     );
   }
 
+  // Function to show wallet options when long pressed
+  void _showWalletOptions(BuildContext context, Map<String, dynamic> wallet) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.cancel),
+              title: const Text('Cancel'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: const Text('Delete Wallet'),
+              onTap: () {
+                setState(() {
+                  wallets.remove(wallet); // Remove the wallet from the list
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to show the wallet details in a full-screen modal
   void showFullScreenModal(BuildContext context, Map<String, dynamic> wallet) {
     Navigator.push(
       context,

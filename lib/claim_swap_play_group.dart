@@ -80,12 +80,18 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
     for (int i = 0; i < wallets.length; i++) {
       bool? isMember = await _checkIsMember(wallets[i]['address']);
       bool canPlay = await _checkPlayStatus(wallets[i]['address']);
+      Map<String, dynamic> info = await _getUserInfo(wallets[i]['address']);
+      int unixClaim = await _checkHasClaim(wallets[i]['address']);
+      print('=====can play ${wallets[i]['address']} -- $info $unixClaim');
 
       if (mounted) {
         setState(() {
           wallets[i]['status'] =
-          (isMember! && canPlay) ? 'Claim' : 'Not Eligible';
+          (isMember! && canPlay) ? 'Play' : 'Played';
           wallets[i]['isEligible'] = isMember && canPlay;
+          wallets[i]['info'] = info;
+          wallets[i]['statusClaim'] = unixClaim > 0 ? 'Has claim' : 'Not found';
+          wallets[i]['unixClaim'] = unixClaim;
         });
       }
     }
@@ -98,6 +104,35 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
   Future<bool> _checkPlayStatus(String walletAddress) async {
     return await getCheckPlay(walletAddress);
   }
+
+  Future<Map<String, dynamic>> _getUserInfo(String walletAddress) async {
+    MemberService memberService = MemberService();
+    return await memberService.getUserInfo(walletAddress);
+  }
+
+  Future<int> _checkHasClaim(String? walletAddress) async {
+    int unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    int unixCheck = (unixTime / 86400).floor() - 50;
+    MemberService memberService = MemberService();
+    int times = 15;
+    int resultUnix = 0;
+
+    for (int i = 0; i <= times; i++) {
+      final Map<String, dynamic> checkPlay = await memberService.getVote(walletAddress ?? '', unixCheck - i);
+
+      // Assuming you want to check if 'checkPlay' contains some claimable condition
+      print('$walletAddress: ${checkPlay}');
+
+      // Example condition, modify according to your actual use case
+      if (checkPlay['percent'] > 0  && checkPlay['claimed'] == false) {
+        resultUnix = unixCheck - i;
+        break;
+      }
+    }
+
+    return resultUnix;  // Return 1 if can claim, otherwise 0
+  }
+
 
   // Lấy số dư của ví
   Future<void> _fetchWalletBalances(List<Map<String, dynamic>> wallets) async {
@@ -142,13 +177,9 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
         ),
       );
     } else {
+      // Access the current bloc instance before calling the dialog
       final bloc = BlocProvider.of<ClaimSwapPlayBloc>(context);
 
-      // Track progress
-      int totalWallets = eligibleWallets.length;
-      int completedWallets = 0;
-
-      // Show dialog
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -157,32 +188,19 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
             value: bloc, // Pass the existing Bloc instance
             child: BlocBuilder<ClaimSwapPlayBloc, ClaimSwapPlayState>(
               builder: (context, state) {
-                // Determine if the process is complete
-                bool isComplete = completedWallets >= totalWallets;
-
+                if (state.status == BlocStatus.success) {
+                  // Close the dialog when the process is done
+                  Navigator.of(context).pop();
+                  _loadWalletData();
+                }
                 return AlertDialog(
-                  // Use the dynamic title and message from the bloc state
-                  title: Text(state.title.isNotEmpty ? state.title : (isComplete ? 'Complete!' : 'Processing...')),
+                  title: Text(state.title ?? 'Processing...'),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Display dynamic message or fallback to default
-                      Text(state.message.isNotEmpty ? state.message : 'Auto Claim-Swap-Play is in progress...'),
+                      Text(state.message ?? 'Auto Claim-Swap-Play is in progress...'),
                       const SizedBox(height: 20),
-                      if (!isComplete) ...[
-                        const CircularProgressIndicator(),
-                        const SizedBox(height: 20),
-                        Text('Completed: $completedWallets/$totalWallets'),
-                      ] else ...[
-                        Text('All $totalWallets wallets have been processed successfully.'),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop(); // Close the dialog
-                          },
-                          child: const Text('Close'),
-                        ),
-                      ],
+                      const CircularProgressIndicator(),
                     ],
                   ),
                 );
@@ -194,36 +212,8 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
 
       // Trigger the event to start processing
       bloc.add(onAutoClaimSwapPlay(members: eligibleWallets));
-
-      // Listen to the Bloc state and update progress
-      bloc.stream.listen((state) {
-        if (state.status == BlocStatus.success) {
-          completedWallets++;
-          if (completedWallets >= totalWallets) {
-            // Close the dialog automatically when all are processed
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Auto Claim-Swap-Play completed for all $totalWallets wallets!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        } else if (state.status == BlocStatus.failure) {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop(); // Close the dialog if failed
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Auto Claim-Swap-Play failed!'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      });
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +250,6 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Updated line to show only eligible wallets
                   RichText(
                     text: TextSpan(
                       children: [
@@ -273,9 +262,9 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
                           ),
                         ),
                         TextSpan(
-                          text: '${wallets.where((wallet) => wallet['status'] == 'Claim').length}',
+                          text: '${wallets.where((wallet) => wallet['status'] == 'Play').length}',
                           style: TextStyle(
-                            color: Colors.red, // Red color for the number
+                            color: Colors.red, // Red color for the value
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -331,11 +320,7 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text('${wallets[index]['bnb_balance']}'),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  children: [
+                                    const SizedBox(width: 8),
                                     Image.asset(
                                       'assets/images/usdt_logo.png',
                                       width: 24,
@@ -345,6 +330,7 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
                                     Text('${wallets[index]['usdt_balance']}'),
                                   ],
                                 ),
+                                const SizedBox(height: 5),
                                 RichText(
                                   text: TextSpan(
                                     children: [
@@ -353,14 +339,53 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
                                         style: TextStyle(color: Colors.black),
                                       ),
                                       TextSpan(
-                                        text: wallets[index]['status'], // The status value (e.g., "Claim" or "Not Eligible")
+                                        text: wallets[index]['status'], // The status value (e.g., "Play" or "Played")
                                         style: TextStyle(
-                                          color: wallets[index]['status'] == 'Claim' ? Colors.green : Colors.red, // Green for "Claim", Red for "Not Eligible"
+                                          color: wallets[index]['status'] == 'Play' ? Colors.green : Colors.red, // Green for "Play", Red for "Played"
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      const TextSpan(
+                                        text: 'Total Played: ', // "Total Played" label in black
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      TextSpan(
+                                        text: '${wallets[index]['info']?['totalVote']}', // The value of "Total Played"
+                                        style: const TextStyle(color: Colors.red), // Red color for the value
+                                      ),
+                                      const TextSpan(
+                                        text: ', Claimed: ', // "Claimed" label in black
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      TextSpan(
+                                        text: '${wallets[index]['info']?['totalClaim']}', // The value of "Claimed"
+                                        style: const TextStyle(color: Colors.red), // Red color for the value
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      const TextSpan(
+                                        text: 'Find claim: ', // "Find claim" label in black
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      TextSpan(
+                                        text: wallets[index]['statusClaim'], // The value of "statusClaim"
+                                        style: TextStyle(
+                                          color: wallets[index]['statusClaim'] == 'Has claim' ? Colors.green : Colors.red, // Green for "Has claim", red for "Not found"
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
                               ],
                             ),
                           ),
@@ -385,29 +410,29 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: isCheckingWallets ? null : _onAutoClaimSwapPlay, // Button is disabled when isCheckingWallets is true
+                        onPressed: isCheckingWallets ? null : _onAutoClaimSwapPlay, // Disable button when scanning
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isCheckingWallets ? Colors.grey : Colors.green, // Change color to grey when inactive
+                          backgroundColor: isCheckingWallets ? Colors.grey : Colors.green, // Change background color when disabled
                         ),
                         child: isCheckingWallets
                             ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Text('Scanning', style: TextStyle(color: Colors.white)),
-                            SizedBox(width: 10), // Spacing between text and indicator
+                            Text('Scanning', style: TextStyle(color: Colors.white)), // Show "Scanning" when disabled
+                            SizedBox(width: 10), // Spacing between text and progress indicator
                             SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white), // Spinner color
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.red), // Spinner color is red
                               ),
                             ),
                           ],
                         )
                             : const Text(
                           'Auto Now',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Colors.white), // Show "Auto Now" when enabled
                         ),
                       ),
 
@@ -417,7 +442,6 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
               ),
             ),
           );
-
         },
       ),
     );

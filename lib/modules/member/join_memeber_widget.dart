@@ -130,11 +130,13 @@ void onJoinMemberKitty(BuildContext context, selectedMember, String refCode, wal
   );
 }
 
-void onPlayNowKitty(BuildContext context, selectedMember, walletChecked) {
+Future<void> onPlayNowKitty(BuildContext context, List<Map<String, String>> selectedMember, List<bool> walletChecked) async {
   BlocProvider.of<JoinMemberBloc>(context).add(
     onPlayNow(context: context, checkedMember: selectedMember, checked: walletChecked),
   );
 }
+
+
 
 Future<bool> getCheckPlay(String walletAddress) async {
   bool checkplay = await checkPlay(walletAddress);

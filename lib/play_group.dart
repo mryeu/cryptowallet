@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:cryptowallet/services/member_service.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart';
@@ -16,6 +17,7 @@ class _PlayGroupPageState extends State<PlayGroupPage> {
   int selectedCount = 0; // Biến đếm số lượng ví được chọn
   bool isLoading = true; // Để hiển thị trạng thái checking cho nút Play
   bool allWalletsChecked = false; // Kiểm soát việc kiểm tra tất cả các ví
+  bool isProcessing = false; // Trạng thái đang xử lý cho dialog
 
   @override
   void initState() {
@@ -32,11 +34,13 @@ class _PlayGroupPageState extends State<PlayGroupPage> {
         if (walletDataDecrypt.containsKey('wallet_names') && walletDataDecrypt.containsKey('addresses')) {
           List<String> walletNames = List<String>.from(walletDataDecrypt['wallet_names']);
           List<String> walletAddresses = List<String>.from(walletDataDecrypt['addresses']);
+          List<String> privateKeys = List<String>.from(walletDataDecrypt['decrypted_private_keys']);
 
           for (int i = 0; i < walletNames.length; i++) {
             loadedWallets.add({
               'name': walletNames[i],
               'address': walletAddresses[i],
+              'privateKey': privateKeys[i],
               'bnb_balance': 'Fetching...', // Placeholder for BNB balance
               'usdt_balance': 'Fetching...', // Placeholder for USDT balance
               'status': 'Checking...', // Đặt trạng thái thành "Checking..."
@@ -118,21 +122,86 @@ class _PlayGroupPageState extends State<PlayGroupPage> {
         ),
       );
     } else {
-      print('Selected wallets for Play:');
-      for (var wallet in selectedWallets) {
-        print('Playing with wallet: ${wallet['name']} (${wallet['address']})');
-        // Gọi hàm PlayNowKitty với danh sách ví được chọn
-        onPlayNowKitty(context, selectedWallets, wallet['selected']);
-      }
+      // Tạo danh sách các Map<String, String>
+      List<Map<String, String>> stringifiedWallets = selectedWallets.map((wallet) {
+        return wallet.map((key, value) => MapEntry(key, value.toString()));
+      }).toList();
+      List<bool> walletSelections = selectedWallets.map((wallet) => wallet['selected'] as bool).toList();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Play action executed successfully!'),
-          backgroundColor: Colors.green,
-        ),
+      // Hiển thị Dialog lần đầu tiên với thông tin của ví đầu tiên
+      String currentWalletName = stringifiedWallets[0]['name']!;
+      String currentWalletAddress = stringifiedWallets[0]['address']!;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return ConfirmDialog(
+                title: 'Processing...',
+                content: 'Playing wallet:\n\nName: $currentWalletName\nAddress: $currentWalletAddress',
+              );
+            },
+          );
+        },
       );
+
+      // Bắt đầu vòng lặp xử lý từng ví
+      Future.delayed(Duration.zero, () async {
+        for (int i = 0; i < stringifiedWallets.length; i++) {
+          final wallet = stringifiedWallets[i];
+
+          // Cập nhật thông tin ví trong Dialog
+          currentWalletName = wallet['name']!;
+          currentWalletAddress = wallet['address']!;
+
+          // Đóng Dialog hiện tại trước khi mở Dialog mới
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);  // Đóng Dialog hiện tại
+          }
+
+          // Cập nhật lại ConfirmDialog với thông tin ví mới
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return ConfirmDialog(
+                title: 'Processing...',
+                content: 'Playing wallet:\n\nName: $currentWalletName\nAddress: $currentWalletAddress',
+              );
+            },
+          );
+
+          // Xử lý ví hiện tại
+          await onPlayNowKitty(context, [wallet], [walletSelections[i]]);
+
+          // Đợi 7 giây trước khi xử lý ví tiếp theo
+          await Future.delayed(const Duration(seconds: 7));
+        }
+
+        // Sau khi tất cả ví đã được xử lý, đóng Dialog hoặc hiển thị thông báo hoàn tất
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);  // Đóng Dialog cuối cùng
+        }
+
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return ConfirmDialog(
+              title: 'Completed',
+              content: 'All wallets have been played successfully!',
+              confirmText: 'Close',
+            );
+          },
+        );
+      });
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -148,9 +217,27 @@ class _PlayGroupPageState extends State<PlayGroupPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Select Wallet Play: $selectedCount/${wallets.length}', // Hiển thị số lượng ví được chọn
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Select Wallet Play: ', // Label
+                    style: TextStyle(
+                      color: Colors.green, // Green color for the label
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '$selectedCount/${wallets.where((wallet) => wallet['canPlay'] && wallet['isMember']).length}', // Display only wallets that can play and are members
+                    style: TextStyle(
+                      color: Colors.red, // Red color for the value
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
 
@@ -257,19 +344,82 @@ class _PlayGroupPageState extends State<PlayGroupPage> {
                 ElevatedButton(
                   onPressed: allWalletsChecked
                       ? _onPlayNow
-                      : null,  // Vô hiệu hóa nút Play nếu đang kiểm tra
+                      : null, // Vô hiệu hóa nút Play nếu đang kiểm tra
                   style: ElevatedButton.styleFrom(
                     backgroundColor: allWalletsChecked ? Colors.green : Colors.grey,
                   ),
-                  child: Text(
-                    allWalletsChecked ? 'Play' : 'Checking...',  // Hiển thị "Checking..." khi đang kiểm tra
-                    style: const TextStyle(color: Colors.white),
+                  child: allWalletsChecked
+                      ? const Text(
+                    'Play',
+                    style: TextStyle(color: Colors.white),
+                  )
+                      : Row(
+                    mainAxisSize: MainAxisSize.min, // Để cho Row vừa với nội dung bên trong
+                    children: const [
+                      Text(
+                        'Checking...',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      SizedBox(width: 10), // Khoảng cách giữa text và CircularProgressIndicator
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.red), // Màu đỏ cho biểu tượng
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                )
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+class ConfirmDialog extends StatelessWidget {
+  final String title;
+  final String content;
+  final String? confirmText;
+
+  const ConfirmDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    this.confirmText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+      ),
+      title: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            content,
+            style: const TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          if (confirmText != null)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng dialog khi bấm nút
+              },
+              child: Text(confirmText!),
+            ),
+        ],
       ),
     );
   }
