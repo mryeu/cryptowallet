@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'check_balance.dart';
 import 'modules/member/blocs/claim_swap_play_bloc.dart';
-import 'modules/member/claim_swap_play_widget.dart';
 import 'modules/member/join_memeber_widget.dart';
 
 class ClaimSwapPlayGroupPage extends StatefulWidget {
@@ -26,23 +25,22 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
     _loadWalletData();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    // Cleanup nếu cần
-  }
-
+  // Load wallet data và trạng thái của ví
   Future<void> _loadWalletData() async {
     try {
-      final walletDataDecrypt = await loadWalletPINFromJson(SessionManager.userPin!);
+      final walletDataDecrypt = await loadWalletPINFromJson(
+          SessionManager.userPin!);
       if (walletDataDecrypt != null) {
         List<Map<String, dynamic>> loadedWallets = [];
         if (walletDataDecrypt.containsKey('wallet_names') &&
             walletDataDecrypt.containsKey('addresses') &&
             walletDataDecrypt.containsKey('decrypted_private_keys')) {
-          List<String> walletNames = List<String>.from(walletDataDecrypt['wallet_names']);
-          List<String> walletAddresses = List<String>.from(walletDataDecrypt['addresses']);
-          List<String> privateKeys = List<String>.from(walletDataDecrypt['decrypted_private_keys']);
+          List<String> walletNames = List<String>.from(
+              walletDataDecrypt['wallet_names']);
+          List<String> walletAddresses = List<String>.from(
+              walletDataDecrypt['addresses']);
+          List<String> privateKeys = List<String>.from(
+              walletDataDecrypt['decrypted_private_keys']);
 
           for (int i = 0; i < walletNames.length; i++) {
             loadedWallets.add({
@@ -77,6 +75,7 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
     }
   }
 
+  // Kiểm tra trạng thái của từng ví
   Future<void> _checkWalletStatuses() async {
     for (int i = 0; i < wallets.length; i++) {
       bool? isMember = await _checkIsMember(wallets[i]['address']);
@@ -84,7 +83,8 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
 
       if (mounted) {
         setState(() {
-          wallets[i]['status'] = (isMember! && canPlay) ? 'Claim' : 'Not Eligible';
+          wallets[i]['status'] =
+          (isMember! && canPlay) ? 'Claim' : 'Not Eligible';
           wallets[i]['isEligible'] = isMember && canPlay;
         });
       }
@@ -99,16 +99,21 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
     return await getCheckPlay(walletAddress);
   }
 
+  // Lấy số dư của ví
   Future<void> _fetchWalletBalances(List<Map<String, dynamic>> wallets) async {
     for (var wallet in wallets) {
       try {
-        double? bnbBalance = await _balanceChecker.getBnbBalance(wallet['address']);
-        double? usdtBalance = await _balanceChecker.getUsdtBalance(wallet['address']);
+        double? bnbBalance = await _balanceChecker.getBnbBalance(
+            wallet['address']);
+        double? usdtBalance = await _balanceChecker.getUsdtBalance(
+            wallet['address']);
 
         if (mounted) {
           setState(() {
-            wallet['bnb_balance'] = bnbBalance != null ? bnbBalance.toStringAsFixed(4) : 'Error';
-            wallet['usdt_balance'] = usdtBalance != null ? usdtBalance.toStringAsFixed(2) : 'Error';
+            wallet['bnb_balance'] =
+            bnbBalance != null ? bnbBalance.toStringAsFixed(4) : 'Error';
+            wallet['usdt_balance'] =
+            usdtBalance != null ? usdtBalance.toStringAsFixed(2) : 'Error';
           });
         }
       } catch (e) {
@@ -117,8 +122,10 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
     }
   }
 
+  // Rút ngắn địa chỉ ví
   String _shortenAddress(String address) {
-    return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
+    return '${address.substring(0, 5)}...${address.substring(
+        address.length - 5)}';
   }
 
   void _onAutoClaimSwapPlay() {
@@ -135,169 +142,185 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
         ),
       );
     } else {
-      // Bắt đầu hiển thị Dialog trước khi gọi hàm xử lý chính
-      _showProcessingDialog();
+      // Access the current bloc instance before calling the dialog
+      final bloc = BlocProvider.of<ClaimSwapPlayBloc>(context);
 
-      // Gọi hàm thực hiện và xử lý kết quả
-      onAutoClaimSwapPlayKitty(context, eligibleWallets).then((_) {
-        Navigator.of(context).pop(); // Đóng dialog khi hoàn thành
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Auto Claim-Swap-Play started successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }).catchError((error) {
-        Navigator.of(context).pop(); // Đóng dialog khi có lỗi
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to start Auto Claim-Swap-Play.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      });
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return BlocProvider.value(
+            value: bloc, // Pass the existing Bloc instance
+            child: BlocBuilder<ClaimSwapPlayBloc, ClaimSwapPlayState>(
+              builder: (context, state) {
+                return AlertDialog(
+                  title: Text(state.title ?? 'Processing...'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(state.message ?? 'Auto Claim-Swap-Play is in progress...'),
+                      const SizedBox(height: 20),
+                      const CircularProgressIndicator(),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      );
+
+      // Trigger the event to start processing
+      bloc.add(onAutoClaimSwapPlay(members: eligibleWallets));
     }
-  }
-
-  Future<void> onAutoClaimSwapPlayKitty(BuildContext context, List<Map<String, String>> members) async {
-    // Gọi hàm xử lý trong Bloc
-    BlocProvider.of<ClaimSwapPlayBloc>(context).add(onAutoClaimSwapPlay(members: members));
-  }
-
-  void _showProcessingDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ClaimSwapPlayBloc()..add(onClaimSwapPlayInit(members: [])),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Claim-Swap-Play Group',
-              style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Total Claim-Swap-Play: ${wallets.length}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: wallets.length,
-                  itemBuilder: (context, index) {
-                    bool isEligible = wallets[index]['isEligible'] == true;
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(
-                          color: isEligible ? Colors.green : Colors.red,
-                          width: 1,
-                        ),
-                      ),
-                      child: ListTile(
-                        title: Row(
-                          children: [
-                            Text(
-                              wallets[index]['name'],
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isEligible ? Colors.green : Colors.red,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _shortenAddress(wallets[index]['address']!),
-                                style: const TextStyle(color: Colors.black54),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Image.asset(
-                                  'assets/images/bnb-bnb-logo.png',
-                                  width: 24,
-                                  height: 24,
-                                ),
-                                const SizedBox(width: 8),
-                                Text('${wallets[index]['bnb_balance']}'),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Image.asset(
-                                  'assets/images/usdt_logo.png',
-                                  width: 24,
-                                  height: 24,
-                                ),
-                                const SizedBox(width: 8),
-                                Text('${wallets[index]['usdt_balance']}'),
-                              ],
-                            ),
-                            Text('Status: ${wallets[index]['status']}'),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+      create: (_) => ClaimSwapPlayBloc(),
+      child: BlocConsumer<ClaimSwapPlayBloc, ClaimSwapPlayState>(
+        listener: (context, state) {
+          if (state.status == BlocStatus.success || state.status == BlocStatus.failure) {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop(); // Close the dialog
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  state.status == BlocStatus.success
+                      ? 'Auto Claim-Swap-Play completed successfully!'
+                      : 'Auto Claim-Swap-Play failed!',
                 ),
+                backgroundColor: state.status == BlocStatus.success ? Colors.green : Colors.red,
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            );
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text(
+                'Claim-Swap-Play Group',
+                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              ),
+            ),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.white),
+                  Text(
+                    'Total Claim-Swap-Play: ${wallets.length}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: wallets.length,
+                      itemBuilder: (context, index) {
+                        bool isEligible = wallets[index]['isEligible'] == true;
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(
+                              color: isEligible ? Colors.green : Colors.red,
+                              width: 1,
+                            ),
+                          ),
+                          child: ListTile(
+                            title: Row(
+                              children: [
+                                Text(
+                                  wallets[index]['name'],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isEligible ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _shortenAddress(wallets[index]['address']!),
+                                    style: const TextStyle(color: Colors.black54),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/bnb-bnb-logo.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('${wallets[index]['bnb_balance']}'),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/usdt_logo.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('${wallets[index]['usdt_balance']}'),
+                                  ],
+                                ),
+                                Text('Status: ${wallets[index]['status']}'),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: isCheckingWallets ? null : _onAutoClaimSwapPlay,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
-                    child: const Text(
-                      'Auto Now',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: isCheckingWallets ? null : _onAutoClaimSwapPlay,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                        child: const Text(
+                          'Auto Now',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
+
 }
 
 class ConfirmDialog extends StatelessWidget {
@@ -314,33 +337,32 @@ class ConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-      child: AlertDialog(
-        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 5),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12.0)),
-        ),
-        content: SizedBox(
-          height: 150,
-          width: 200,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(title),
-              const SizedBox(height: 20),
-              Expanded(
-                child: Text(content),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text("Close")),
-                ],
-              )
-            ],
+    return AlertDialog(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+      ),
+      title: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            content,
+            style: const TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
           ),
-        ),
+          const SizedBox(height: 20),
+          if (confirmText != null)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng dialog khi bấm nút
+              },
+              child: Text(confirmText!),
+            ),
+        ],
       ),
     );
   }
