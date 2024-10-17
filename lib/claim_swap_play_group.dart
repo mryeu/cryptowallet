@@ -80,12 +80,18 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
     for (int i = 0; i < wallets.length; i++) {
       bool? isMember = await _checkIsMember(wallets[i]['address']);
       bool canPlay = await _checkPlayStatus(wallets[i]['address']);
-
+      Map<String, dynamic> info = await _getUserInfo(wallets[i]['address']);
+      int unixClaim = await _checkHasClaim(wallets[i]['address']);
+      print('=====can play ${wallets[i]['address']} -- $info $unixClaim');
+  
       if (mounted) {
         setState(() {
           wallets[i]['status'] =
-          (isMember! && canPlay) ? 'Claim' : 'Not Eligible';
+          (isMember! && canPlay) ? 'Play' : 'Played';
           wallets[i]['isEligible'] = isMember && canPlay;
+          wallets[i]['info'] = info;
+          wallets[i]['statusClaim'] = unixClaim > 0 ? 'Has claim' : 'Not found';
+          wallets[i]['unixClaim'] = unixClaim;
         });
       }
     }
@@ -98,6 +104,35 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
   Future<bool> _checkPlayStatus(String walletAddress) async {
     return await getCheckPlay(walletAddress);
   }
+
+  Future<Map<String, dynamic>> _getUserInfo(String walletAddress) async {
+    MemberService memberService = MemberService();
+    return await memberService.getUserInfo(walletAddress);
+  }
+
+  Future<int> _checkHasClaim(String? walletAddress) async {
+    int unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    int unixCheck = (unixTime / 86400).floor() - 50;
+    MemberService memberService = MemberService();
+    int times = 15;
+    int resultUnix = 0;
+
+    for (int i = 0; i <= times; i++) {
+      final Map<String, dynamic> checkPlay = await memberService.getVote(walletAddress ?? '', unixCheck - i);
+
+      // Assuming you want to check if 'checkPlay' contains some claimable condition
+      print('$walletAddress: ${checkPlay}');
+
+      // Example condition, modify according to your actual use case
+      if (checkPlay['percent'] > 0  && checkPlay['claimed'] == false) {
+        resultUnix = unixCheck - i;
+        break;
+      }
+    }
+
+    return resultUnix;  // Return 1 if can claim, otherwise 0
+  }
+
 
   // Lấy số dư của ví
   Future<void> _fetchWalletBalances(List<Map<String, dynamic>> wallets) async {
@@ -153,6 +188,11 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
             value: bloc, // Pass the existing Bloc instance
             child: BlocBuilder<ClaimSwapPlayBloc, ClaimSwapPlayState>(
               builder: (context, state) {
+                if (state.status == BlocStatus.success) {
+                  // Close the dialog when the process is done
+                  Navigator.of(context).pop();
+                  _loadWalletData(); 
+                }
                 return AlertDialog(
                   title: Text(state.title ?? 'Processing...'),
                   content: Column(
@@ -277,6 +317,9 @@ class _ClaimSwapPlayGroupPageState extends State<ClaimSwapPlayGroupPage> {
                                   ],
                                 ),
                                 Text('Status: ${wallets[index]['status']}'),
+                                Text('Total Played: ${wallets[index]['info']?['totalVote']}, Claimed: ${wallets[index]['info']?['totalClaim']}'),
+                                Text('Find claim: ${wallets[index]['statusClaim']}'),
+
                               ],
                             ),
                           ),
