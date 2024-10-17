@@ -9,6 +9,7 @@ class ClaimSwapPlayState extends Equatable {
   final String title; // Tiêu đề thông báo
   final String message; // Thông báo
   final List<String> messages; // Danh sách các thông báo tiến trình
+  final int? currentWalletIndex; // Thêm trường currentWalletIndex để theo dõi ví hiện tại
 
   const ClaimSwapPlayState({
     this.status = BlocStatus.initial,
@@ -17,6 +18,7 @@ class ClaimSwapPlayState extends Equatable {
     this.title = '',
     this.message = '',
     this.messages = const [], // Danh sách các thông báo tiến trình khởi tạo rỗng
+    this.currentWalletIndex, // Khởi tạo currentWalletIndex (null mặc định)
   });
 
   // Hàm copyWith giúp tạo một phiên bản mới của state với các thay đổi cụ thể
@@ -27,6 +29,7 @@ class ClaimSwapPlayState extends Equatable {
     String? title,
     String? message,
     List<String>? messages, // Thêm khả năng cập nhật danh sách các thông báo
+    int? currentWalletIndex, // Thêm khả năng cập nhật chỉ số ví đang được xử lý
   }) {
     return ClaimSwapPlayState(
       status: status ?? this.status,
@@ -35,9 +38,10 @@ class ClaimSwapPlayState extends Equatable {
       title: title ?? this.title,
       message: message ?? this.message,
       messages: messages ?? this.messages, // Cập nhật danh sách thông báo nếu có
+      currentWalletIndex: currentWalletIndex ?? this.currentWalletIndex, // Cập nhật currentWalletIndex nếu có
     );
   }
 
   @override
-  List<Object> get props => [status, members, title, message, messages]; // Thêm messages vào props
+  List<Object?> get props => [status, members, title, message, messages, currentWalletIndex]; // Thêm currentWalletIndex vào props
 }

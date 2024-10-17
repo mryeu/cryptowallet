@@ -488,10 +488,17 @@ class MemberService {
     }
   }
 
-  Future<String> onClaim(String privateKey, EthereumAddress accountAddress,
-      int day) async {
+  Future<String> onClaim(String privateKey, EthereumAddress accountAddress, int day) async {
     try {
-      // ABI cho hàm claim
+      // Validate inputs before proceeding
+      if (privateKey.isEmpty) {
+        throw ArgumentError('Private key is required.');
+      }
+      if (day < 0) {
+        throw ArgumentError('Day must be a positive integer.');
+      }
+
+      // ABI for claim function
       const claimAbi = '''
     [
       {
@@ -506,33 +513,71 @@ class MemberService {
     ]
     ''';
 
-      final claimContract = DeployedContract(
+      // Create contract instance
+      DeployedContract? claimContract;
+      try {
+        claimContract = DeployedContract(
           ContractAbi.fromJson(claimAbi, 'ClaimContract'),
-          contractClaimAddress);
+          contractClaimAddress,
+        );
+      } catch (e) {
+        throw Exception('Failed to create contract: $e');
+      }
+
+      // Access claim function from contract
       final claimFunction = claimContract.function('claim');
-      final credentials = EthPrivateKey.fromHex(privateKey);
 
-      final nonce = await web3.getTransactionCount(accountAddress);
-      final EtherAmount gasPrice = EtherAmount.inWei(BigInt.from(1000000000));
-      final EtherAmount value = EtherAmount.inWei(BigInt.from(300000000000000));
+      // Convert private key to credentials
+      EthPrivateKey? credentials;
+      try {
+        credentials = EthPrivateKey.fromHex(privateKey);
+      } catch (e) {
+        throw Exception('Invalid private key format: $e');
+      }
 
-      final transaction = Transaction.callContract(
-        contract: claimContract,
-        function: claimFunction,
-        parameters: [BigInt.from(day)],
-        from: accountAddress,
-        gasPrice: gasPrice,
-        maxGas: 300000,
-        value: value,
-        nonce: nonce,
-      );
+      // Get transaction nonce
+      int? nonce;
+      try {
+        nonce = await web3.getTransactionCount(accountAddress);
+      } catch (e) {
+        throw Exception('Failed to retrieve transaction nonce: $e');
+      }
 
-      final txHash = await _signAndSendTransaction(credentials, transaction);
+      // Set gas price and value
+      final EtherAmount gasPrice = EtherAmount.inWei(BigInt.from(1000000000)); // 1 Gwei
+      final EtherAmount value = EtherAmount.inWei(BigInt.from(300000000000000)); // Value for the claim
+
+      // Prepare transaction
+      Transaction? transaction;
+      try {
+        transaction = Transaction.callContract(
+          contract: claimContract,
+          function: claimFunction,
+          parameters: [BigInt.from(day)],
+          from: accountAddress,
+          gasPrice: gasPrice,
+          maxGas: 300000,
+          value: value,
+          nonce: nonce,
+        );
+      } catch (e) {
+        throw Exception('Failed to create transaction: $e');
+      }
+
+      // Sign and send the transaction
+      String? txHash;
+      try {
+        txHash = await _signAndSendTransaction(credentials, transaction);
+      } catch (e) {
+        throw Exception('Failed to sign or send transaction: $e');
+      }
+
       print('Claim transaction hash: $txHash');
       return txHash;
     } catch (e) {
+      // General error handling
       print('An error occurred during the claim process: $e');
-      rethrow;
+      return 'Error: ${e.toString()}';
     }
   }
 
