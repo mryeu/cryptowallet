@@ -4,7 +4,7 @@ import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:web3dart/credentials.dart';
+
 
 import 'WalletDetailsPage.dart';
 import 'add_member.dart';
@@ -13,7 +13,7 @@ import 'claim_swap_play_group.dart';
 import 'join_group.dart';
 import 'modules/member/blocs/claim_swap_play_bloc.dart';
 import 'modules/member/blocs/join_member_bloc.dart';
-import 'modules/member/claim_swap_play_widget.dart';
+import 'wallet_create.dart';
 
 class PlayScreen extends StatefulWidget {
   const PlayScreen({super.key});
@@ -106,233 +106,236 @@ class _PlayScreenState extends State<PlayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[200],
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(3.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with title and filtering options
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Play Screen',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                  DropdownButton<String>(
-                    dropdownColor: Colors.green[100],
-                    value: selectedWallet,
-                    icon: const Icon(Icons.filter_list, color: Colors.green),
-                    underline: Container(height: 2, color: Colors.greenAccent),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedWallet = newValue;
-                      });
-                    },
-                    items: walletFilterOptions.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value, style: const TextStyle(color: Colors.green)),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Action buttons (Join, Play, Claim-Swap-Play)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider(
-                            create: (context) => JoinMemberBloc(), // Khởi tạo Bloc ở đây
-                            child: JoinPage(),
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.group_add),
-                    label: const Text('Join'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.green,
-                    ),
-                  ),
-
-
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider(
-                            create: (context) => JoinMemberBloc(),
-                            child: PlayGroupPage(),
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('Play'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.green,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider(
-                            create: (context) => ClaimSwapPlayBloc(),
-                            child: ClaimSwapPlayGroupPage(),
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.swap_horiz),
-                    label: const Text('Claim-Swap-Play'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.green,
-                    ),
-                  ),
-
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Wallets section header
-              Text(
-                'Your Wallets',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Wallet cards
-              Expanded(
-                child: ListView.builder(
-                  itemCount: wallets.length,
-                  itemBuilder: (context, index) {
-                    // Check if the selected wallet filter applies
-                    if (selectedWallet != 'All Wallets' &&
-                        wallets[index]['name'] != selectedWallet) {
-                      return Container(); // Skip rendering this wallet
-                    }
-                    return GestureDetector(
-                      onLongPress: () {
-                        _showWalletOptions(context, wallets[index]);
-                      },
-                      onTap: () {
-                        // Show full-screen popup when wallet is tapped
-                        showFullScreenModal(context, wallets[index]);
-                      },
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Colors.green, width: 1),
-                        ),
-                        margin: const EdgeInsets.symmetric(vertical: 3),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                wallets[index]['name'],
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              // Row for both BNB and USDT balances
-                              Row(
-                                children: [
-                                  // BNB balance
-                                  Image.asset(
-                                    'assets/images/bnb-bnb-logo.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${wallets[index]['bnb_balance']}',
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  const SizedBox(width: 16),
-
-                                  // USDT balance
-                                  Image.asset(
-                                    'assets/images/usdt_logo.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${wallets[index]['usdt_balance']}',
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  // Spacer to push the button to the right
-                                  const Spacer(),
-                                  // Check if the wallet is a member to show the appropriate button
-                                  ElevatedButton(
-                                    onPressed: wallets[index]['isMember']
-                                        ? () async {
-                                      // Hành động khi nhấn nút
-                                      try {
-                                        TransactionServiceMember memberService = TransactionServiceMember();
-                                        //EthereumAddress accountAddress = EthereumAddress.fromHex(wallets['address']); // Replace with your account address
-
-                                        // Call the addDeposit function
-                                        //String txHash = await memberService.addDeposit(context, privateKey, accountAddress);
-                                       } catch (e) {
-                                       }
-                                    }
-                                        : () {
-                                      // Handle Join action for this wallet
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      backgroundColor: Colors.green,
-                                    ),
-                                    child: Text(wallets[index]['isMember'] ? 'Auto Play' : 'Join'),
-                                  ),
-                                ],
-                              ),
-
-                            ],
-                          ),
-                        ),
+    return WillPopScope(
+      onWillPop: () async {
+        // Trả về false để vô hiệu hóa nút back
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey[200],
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(3.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with title and filtering options
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Play Screen',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[700],
                       ),
-                    );
-                  },
+                    ),
+                    DropdownButton<String>(
+                      dropdownColor: Colors.green[100],
+                      value: selectedWallet,
+                      icon: const Icon(Icons.filter_list, color: Colors.green),
+                      underline: Container(height: 2, color: Colors.greenAccent),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedWallet = newValue;
+                        });
+                      },
+                      items: walletFilterOptions.map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value, style: const TextStyle(color: Colors.green)),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+
+                // Action buttons (Join, Play, Claim-Swap-Play)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider(
+                              create: (context) => JoinMemberBloc(), // Khởi tạo Bloc ở đây
+                              child: JoinPage(),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.group_add),
+                      label: const Text('Join'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.green,
+                      ),
+                    ),
+
+
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider(
+                              create: (context) => JoinMemberBloc(),
+                              child: PlayGroupPage(),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Play'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.green,
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider(
+                              create: (context) => ClaimSwapPlayBloc(),
+                              child: ClaimSwapPlayGroupPage(),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.swap_horiz),
+                      label: const Text('Claim-Swap-Play'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.green,
+                      ),
+                    ),
+
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Wallets section header
+                Text(
+                  'Your Wallets',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Wallet cards
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: wallets.length,
+                    itemBuilder: (context, index) {
+                      // Check if the selected wallet filter applies
+                      if (selectedWallet != 'All Wallets' &&
+                          wallets[index]['name'] != selectedWallet) {
+                        return Container(); // Skip rendering this wallet
+                      }
+                      return GestureDetector(
+                        onLongPress: () {
+                          _showWalletOptions(context, wallets[index]);
+                        },
+                        onTap: () {
+                          // Show full-screen popup when wallet is tapped
+                          showFullScreenModal(context, wallets[index]);
+                        },
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: Colors.green, width: 1),
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  wallets[index]['name'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                // Row for both BNB and USDT balances
+                                Row(
+                                  children: [
+                                    // BNB balance
+                                    Image.asset(
+                                      'assets/images/bnb-bnb-logo.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${wallets[index]['bnb_balance']}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    const SizedBox(width: 16),
+
+                                    // USDT balance
+                                    Image.asset(
+                                      'assets/images/usdt_logo.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${wallets[index]['usdt_balance']}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    // Spacer to push the button to the right
+                                    const Spacer(),
+                                    // Check if the wallet is a member to show the appropriate button
+                                    ElevatedButton(
+                                      onPressed: wallets[index]['isMember']
+                                          ? () async {
+                                        // Hành động khi nhấn nút
+                                        try {
+                                          TransactionServiceMember memberService = TransactionServiceMember();
+                                        } catch (e) {
+                                        }
+                                      }
+                                          : () {
+                                        // Handle Join action for this wallet
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        backgroundColor: Colors.green,
+                                      ),
+                                      child: Text(wallets[index]['isMember'] ? 'Auto Play' : 'Join'),
+                                    ),
+                                  ],
+                                ),
+
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
 
   // Function to show wallet options when long pressed
   void _showWalletOptions(BuildContext context, Map<String, dynamic> wallet) {
@@ -352,7 +355,9 @@ class _PlayScreenState extends State<PlayScreen> {
               leading: const Icon(Icons.delete),
               title: const Text('Delete Wallet'),
               onTap: () {
+                deleteWallet(wallet['address']);
                 setState(() {
+
                   wallets.remove(wallet); // Remove the wallet from the list
                 });
                 Navigator.pop(context);
@@ -362,6 +367,46 @@ class _PlayScreenState extends State<PlayScreen> {
         );
       },
     );
+  }
+  Future<void> deleteWallet(String walletAddress) async {
+    try {
+      // Tải dữ liệu ví hiện tại từ file JSON
+      final walletData = await loadWalletFromJson();
+
+      if (walletData == null) {
+        print('Không tìm thấy dữ liệu ví.');
+        return;
+      }
+
+      // Tìm vị trí của địa chỉ ví để xóa
+      List<String> addresses = List<String>.from(walletData['addresses']);
+      List<String> walletNames = List<String>.from(walletData['wallet_names']);
+      List<String> encryptedPrivateKeys = List<String>.from(walletData['encrypted_private_keys']);
+
+      int walletIndex = addresses.indexOf(walletAddress);
+      if (walletIndex == -1) {
+        print('Không tìm thấy địa chỉ ví để xóa.');
+        return;
+      }
+
+      // Xóa địa chỉ, tên ví và private key tương ứng
+      addresses.removeAt(walletIndex);
+      walletNames.removeAt(walletIndex);
+      encryptedPrivateKeys.removeAt(walletIndex);
+
+      // Lưu dữ liệu đã cập nhật vào file JSON
+      final updatedWalletData = {
+        'encrypted_mnemonic': walletData['encrypted_mnemonic'],
+        'encrypted_private_keys': encryptedPrivateKeys,
+        'addresses': addresses,
+        'wallet_names': walletNames,
+      };
+
+      await saveWalletToJson(updatedWalletData);
+      print('Đã xóa ví thành công.');
+    } catch (e) {
+      print('Lỗi khi xóa ví: $e');
+    }
   }
 
   // Function to show the wallet details in a full-screen modal
