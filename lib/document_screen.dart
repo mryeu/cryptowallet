@@ -5,46 +5,51 @@ class DocumentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Document'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(8.0),
-        children: <Widget>[
-          _buildTreeItem(
-            title: 'Section 1: How to Play KittyRun',
-            content: 'hiển thị nội dung chi tiết ở đây đoạn này dùng multilanguage để dịch các phiên bản các nước.',
-          ),
-          _buildTreeItem(
-            title: 'Section 2: How to Claim',
-            content: 'hiển thị nội dung chi tiết ở đây',
-          ),
-          _buildTreeItem(
-            title: 'Section 3: How to Swap',
-            content: 'hiển thị nội dung chi tiết ở đây',
-          ),
-          _buildTreeItem(
-            title: 'Section 4: How to invite',
-            content: 'hiển thị nội dung chi tiết ở đây.',
-          ),
-          _buildTreeItem(
-            title: 'Section 5: How to get Reward',
-            content: 'hiển thị nội dung chi tiết ở đây',
-          ),
-          _buildTreeItem(
-            title: 'Section 6: star ',
-            content: 'hiển thị nội dung chi tiết ở đây',
-          ),
-          _buildTreeItem(
-            title: 'Section 7: Play game',
-            content: 'hiển thị nội dung chi tiết ở đây',
-          ),
-          _buildTreeItem(
-            title: 'Section 8: Claim Game',
-            content: 'hiển thị nội dung chi tiết ở đây',
-          ),
-        ],
+    return WillPopScope(
+      onWillPop: () async {
+         return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Document'),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(8.0),
+          children: <Widget>[
+            _buildTreeItem(
+              title: 'Section 1: How to Play KittyRun',
+              content: 'Detailed instructions for playing KittyRun go here.',
+            ),
+            _buildTreeItem(
+              title: 'Section 2: How to Claim',
+              content: 'Instructions for claiming rewards or tokens.',
+            ),
+            _buildTreeItem(
+              title: 'Section 3: How to Swap',
+              content: 'Information on how to swap tokens or assets.',
+            ),
+            _buildTreeItem(
+              title: 'Section 4: How to Invite',
+              content: 'Details on inviting other users or friends.',
+            ),
+            _buildTreeItem(
+              title: 'Section 5: How to Get Reward',
+              content: 'Explanation on how users can earn rewards.',
+            ),
+            _buildTreeItem(
+              title: 'Section 6: Star System',
+              content: 'Details on the star system and its uses.',
+            ),
+            _buildTreeItem(
+              title: 'Section 7: Play Game',
+              content: 'General instructions for playing the game.',
+            ),
+            _buildTreeItem(
+              title: 'Section 8: Claim Game',
+              content: 'Instructions on how to claim rewards after a game.',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:cryptowallet/services/member_service.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 
@@ -261,14 +262,44 @@ class _PlayScreenState extends State<PlayScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  wallets[index]['name'],
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                // Row for wallet name, shortened address, and copy button
+                                Row(
+                                  children: [
+                                    // Wallet name
+                                    Text(
+                                      wallets[index]['name'],
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green, // Tên ví màu xanh
+                                      ),
+                                    ),
+                                    const Text(" : "),
+
+                                    // Shortened address
+                                    Expanded(
+                                      child: Text(
+                                        _shortenAddress(wallets[index]['address']), // Rút gọn địa chỉ
+                                        style: const TextStyle(color: Colors.black54),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+
+                                    // Copy button
+                                    IconButton(
+                                      icon: const Icon(Icons.copy, color: Colors.grey), // Nút sao chép
+                                      onPressed: () {
+                                        Clipboard.setData(ClipboardData(text: wallets[index]['address'])); // Sao chép địa chỉ vào clipboard
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Address copied to clipboard')), // Thông báo khi sao chép thành công
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
+
                                 const SizedBox(height: 10),
+
                                 // Row for both BNB and USDT balances
                                 Row(
                                   children: [
@@ -298,6 +329,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                     ),
                                     // Spacer to push the button to the right
                                     const Spacer(),
+
                                     // Check if the wallet is a member to show the appropriate button
                                     ElevatedButton(
                                       onPressed: wallets[index]['isMember']
@@ -319,7 +351,6 @@ class _PlayScreenState extends State<PlayScreen> {
                                     ),
                                   ],
                                 ),
-
                               ],
                             ),
                           ),
@@ -336,6 +367,12 @@ class _PlayScreenState extends State<PlayScreen> {
     );
   }
 
+  String _shortenAddress(String address) {
+    if (address.length > 10) {
+      return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
+    }
+    return address; // Nếu địa chỉ quá ngắn, không cần rút gọn
+  }
 
   // Function to show wallet options when long pressed
   void _showWalletOptions(BuildContext context, Map<String, dynamic> wallet) {

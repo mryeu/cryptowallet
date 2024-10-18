@@ -85,15 +85,18 @@ class _TermsScreenState extends State<TermsScreen> {
                   ),
                 ),
                 onPressed: _isChecked
-                    ? () {
-                  _acceptTerms();
+                    ? () async {
+                  await _acceptTerms(); // Đợi quá trình lưu trữ hoàn tất
+
                   // Điều hướng tới màn hình lựa chọn Create hoặc Import
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WalletChoiceScreen(),
-                    ),
-                  );
+                  if (mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WalletChoiceScreen(),
+                      ),
+                    );
+                  }
                 }
                     : null,
                 child: const Text("Accept"),
