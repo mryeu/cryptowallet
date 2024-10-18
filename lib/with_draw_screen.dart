@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:web3dart/web3dart.dart';
-
 import 'build_widget.dart';
+import 'check_balance.dart';  // Thêm phần kiểm tra số dư
 
 class WithdrawScreen extends StatefulWidget {
   const WithdrawScreen({Key? key}) : super(key: key);
@@ -20,6 +20,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   List<Map<String, dynamic>> wallets = []; // Placeholder for wallet data
   String? mainWalletAddress; // The main wallet address
   bool isLoading = false; // Tracks if a withdrawal is in progress
+  final TokenBalanceChecker _balanceChecker = TokenBalanceChecker(); // Dùng để kiểm tra số dư
 
   @override
   void initState() {
@@ -27,7 +28,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     _loadWalletData();
   }
 
-  // Load the wallet data using the stored PIN
   // Load the wallet data using the stored PIN
   Future<void> _loadWalletData() async {
     String? pin = SessionManager.userPin;
@@ -42,8 +42,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           // Read wallet names and addresses
           List<String> walletNames = walletDataDecrypt['wallet_names'] ?? [];
           List<String> walletAddresses = walletDataDecrypt['addresses'] ?? [];
-          List<double> bnbBalances = walletDataDecrypt['bnb_balance'] ?? List.filled(walletAddresses.length, 0.0);
-          List<double> usdtBalances = walletDataDecrypt['usdt_balance'] ?? List.filled(walletAddresses.length, 0.0);
           List<String> privateKeys = walletDataDecrypt['decrypted_private_keys'] ?? [];
 
           // Check if walletAddresses have enough elements
@@ -60,20 +58,42 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             wallets.add({
               'name': i < walletNames.length ? walletNames[i] : 'Wallet $i', // Fallback in case name is missing
               'address': walletAddresses[i],
-              'bnbBalance': i < bnbBalances.length ? bnbBalances[i] : 0.0,
-              'usdtBalance': i < usdtBalances.length ? usdtBalances[i] : 0.0,
+              'bnbBalance': 'Fetching...', // Placeholder for BNB balance
+              'usdtBalance': 'Fetching...', // Placeholder for USDT balance
               'privateKey': i < privateKeys.length ? privateKeys[i] : '', // Ensure there's a fallback
             });
             _selectedWallets[walletAddresses[i]] = true; // Select all wallets by default
           }
 
           _selectedCount = _selectedWallets.length; // Set the initial count
+
+          // Fetch wallet balances (BNB và USDT)
+          _fetchWalletBalances(wallets);
         });
       } else {
         print('Failed to load or decrypt wallet data.');
       }
     } else {
       print('No PIN found in session.');
+    }
+  }
+
+  // Fetch wallet balances (BNB và USDT)
+  Future<void> _fetchWalletBalances(List<Map<String, dynamic>> wallets) async {
+    for (var wallet in wallets) {
+      try {
+        // Fetch BNB balance
+        double? bnbBalance = await _balanceChecker.getBnbBalance(wallet['address']);
+        // Fetch USDT balance
+        double? usdtBalance = await _balanceChecker.getUsdtBalance(wallet['address']);
+
+        setState(() {
+          wallet['bnbBalance'] = bnbBalance != null ? bnbBalance.toStringAsFixed(4) : 'Error';
+          wallet['usdtBalance'] = usdtBalance != null ? usdtBalance.toStringAsFixed(2) : 'Error';
+        });
+      } catch (e) {
+        print('Error fetching balances for ${wallet['address']}: $e');
+      }
     }
   }
 
@@ -93,7 +113,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   }
 
   // This method will handle the withdraw process
-// This method will handle the withdraw process
   Future<void> _performWithdraw() async {
     List<Map<String, dynamic>> selectedWallets = wallets.where((wallet) {
       return _selectedWallets[wallet['address']] == true;
@@ -158,7 +177,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,18 +223,63 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                     ),
                   ],
                 ),
-                Text('Selected: $_selectedCount / ${_selectedWallets.length}'),
               ],
             ),
             const SizedBox(height: 20),
+
+            // Selected count and Check All/Uncheck All on the same row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Selected: ', // Phần "Selected"
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.green, // Màu xanh cho từ "Selected"
+                        ),
+                      ),
+                      TextSpan(
+                        text: '$_selectedCount / ${_selectedWallets.length}', // Hiển thị giá trị selectedCount và tổng số ví
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedCount < _selectedWallets.length ? Colors.red : Colors.green, // Màu đỏ nếu selectedCount nhỏ hơn tổng số ví, màu xanh nếu ngược lại
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      // Check all nếu có ví chưa được chọn, ngược lại thì uncheck all
+                      bool allSelected = _selectedCount == _selectedWallets.length;
+                      _selectedWallets.updateAll((key, value) => !allSelected); // Toggle tất cả giá trị
+                      _selectedCount = _selectedWallets.values.where((isSelected) => isSelected).length;
+                    });
+                  },
+                  child: Text(
+                    _selectedCount == _selectedWallets.length ? 'Uncheck All' : 'Check All', // Đổi text theo trạng thái
+                    style: TextStyle(
+                      color: _selectedCount == _selectedWallets.length ? Colors.red : Colors.green, // Màu đỏ khi tất cả đã được chọn, màu xanh nếu ngược lại
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
             Expanded(
               child: ListView.builder(
                 itemCount: wallets.length,
                 itemBuilder: (context, index) {
                   String walletName = wallets[index]['name'];
                   String address = wallets[index]['address'];
-                  double bnbBalance = wallets[index]['bnbBalance'];
-                  double usdtBalance = wallets[index]['usdtBalance'];
+                  String bnbBalance = wallets[index]['bnbBalance'];
+                  String usdtBalance = wallets[index]['usdtBalance'];
 
                   // Shorten the address for display
                   String shortAddress = (address.length > 10)

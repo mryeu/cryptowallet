@@ -4,8 +4,10 @@ import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:web3dart/credentials.dart';
 
 import 'WalletDetailsPage.dart';
+import 'add_member.dart';
 import 'check_balance.dart';
 import 'claim_swap_play_group.dart';
 import 'join_group.dart';
@@ -294,8 +296,16 @@ class _PlayScreenState extends State<PlayScreen> {
                                   // Check if the wallet is a member to show the appropriate button
                                   ElevatedButton(
                                     onPressed: wallets[index]['isMember']
-                                        ? () {
-                                      // Handle Auto Play action for this wallet
+                                        ? () async {
+                                      // Hành động khi nhấn nút
+                                      try {
+                                        TransactionServiceMember memberService = TransactionServiceMember();
+                                        //EthereumAddress accountAddress = EthereumAddress.fromHex(wallets['address']); // Replace with your account address
+
+                                        // Call the addDeposit function
+                                        //String txHash = await memberService.addDeposit(context, privateKey, accountAddress);
+                                       } catch (e) {
+                                       }
                                     }
                                         : () {
                                       // Handle Join action for this wallet

@@ -58,7 +58,7 @@ class WalletDetailsPage extends StatelessWidget {
                             margin: const EdgeInsets.symmetric(horizontal: 5),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFFA8E063), Color(0xFF56AB2F)], // Light green to dark green gradient
+                                colors: [Color(0xFF56AB2F),Color(0xFFA8E063) ], // Light green to dark green gradient
                               ),
                               borderRadius: BorderRadius.circular(5),
                             ),

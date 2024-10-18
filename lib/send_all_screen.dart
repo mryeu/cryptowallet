@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation functions
 import 'package:web3dart/web3dart.dart';
+import 'check_balance.dart'; // Import check balance service
 
 class SendAllScreen extends StatefulWidget {
   const SendAllScreen({Key? key}) : super(key: key);
@@ -21,6 +22,7 @@ class _SendAllScreenState extends State<SendAllScreen> {
   String? mainWalletPrivateKey;
   TextEditingController amountController = TextEditingController(); // Input field controller
   double perWalletAmount = 0.0; // Amount each selected wallet will receive
+  final TokenBalanceChecker _balanceChecker = TokenBalanceChecker(); // Balance checker
 
   @override
   void initState() {
@@ -28,7 +30,7 @@ class _SendAllScreenState extends State<SendAllScreen> {
     _loadWalletData();
   }
 
-  // Load the wallet data using the stored PIN
+  // Load the wallet data using the stored PIN and fetch balances
   Future<void> _loadWalletData() async {
     String? pin = SessionManager.userPin;
     if (pin != null) {
@@ -42,24 +44,66 @@ class _SendAllScreenState extends State<SendAllScreen> {
           // Read wallet names, addresses, and private keys
           List<String> walletNames = walletDataDecrypt['wallet_names'];
           List<String> walletAddresses = walletDataDecrypt['addresses'];
-          List<String> privateKeys = walletDataDecrypt['decrypted_private_keys'];
+          List<
+              String> privateKeys = walletDataDecrypt['decrypted_private_keys'];
 
           mainWalletAddress = walletAddresses[0];
-          mainWalletPrivateKey = privateKeys[0]; // Retrieve the private key for the main wallet
-      for (int i = 1; i < walletAddresses.length; i++) {
+          mainWalletPrivateKey =
+          privateKeys[0]; // Retrieve the private key for the main wallet
+
+          for (int i = 1; i < walletAddresses.length; i++) {
             wallets.add({
               'name': walletNames[i],
               'address': walletAddresses[i],
-              'privateKey': privateKeys[i], // Include private keys for other wallets
+              'privateKey': privateKeys[i],
+              // Include private keys for other wallets
+              'bnbBalance': 'Fetching...',
+              // Placeholder for BNB balance
+              'usdtBalance': 'Fetching...',
+              // Placeholder for USDT balance
+              'ktrBalance': 'Fetching...'
+              // Placeholder for KTR balance
             });
-            _selectedWallets[walletAddresses[i]] = true; // Select all wallets by default
+            _selectedWallets[walletAddresses[i]] =
+            true; // Select all wallets by default
           }
 
           _selectedCount = _selectedWallets.length; // Set the initial count
           _calculatePerWalletAmount(); // Calculate the initial per wallet amount
+
+          // Fetch wallet balances (BNB, USDT, KTR)
+          _fetchWalletBalances(wallets);
         });
       } else {
         print('Failed to load or decrypt wallet data.');
+      }
+    }
+  }
+
+  // Fetch the real-time balances (BNB, USDT, KTR)
+  Future<void> _fetchWalletBalances(List<Map<String, dynamic>> wallets) async {
+    for (var wallet in wallets) {
+      try {
+        // Fetch BNB balance
+        double? bnbBalance = await _balanceChecker.getBnbBalance(
+            wallet['address']);
+        // Fetch USDT balance
+        double? usdtBalance = await _balanceChecker.getUsdtBalance(
+            wallet['address']);
+        // Fetch KTR balance (you can implement the balance fetch for KTR)
+        double? ktrBalance = await _balanceChecker.getKtrBalance(
+            wallet['address']);
+
+        setState(() {
+          wallet['bnbBalance'] =
+          bnbBalance != null ? bnbBalance.toStringAsFixed(4) : 'Error';
+          wallet['usdtBalance'] =
+          usdtBalance != null ? usdtBalance.toStringAsFixed(2) : 'Error';
+          wallet['ktrBalance'] =
+          ktrBalance != null ? ktrBalance.toStringAsFixed(2) : 'Error';
+        });
+      } catch (e) {
+        print('Error fetching balances for ${wallet['address']}: $e');
       }
     }
   }
@@ -78,8 +122,7 @@ class _SendAllScreenState extends State<SendAllScreen> {
     }
   }
 
-  // Inside the SendAllScreen class
-
+  // Perform the send operation
   Future<void> _performSend() async {
     List<Map<String, dynamic>> selectedWallets = wallets.where((wallet) {
       return _selectedWallets[wallet['address']] == true;
@@ -103,16 +146,25 @@ class _SendAllScreenState extends State<SendAllScreen> {
 
         try {
           if (_selectedToken == 'BNB') {
-            print('Sending $perWalletAmount BNB from $mainWalletAddress to $toAddress');
-            await action.sendBNB(mainWalletPrivateKey!, EthereumAddress.fromHex(toAddress), perWalletAmount);
+            print(
+                'Sending $perWalletAmount BNB from $mainWalletAddress to $toAddress');
+            await action.sendBNB(
+                mainWalletPrivateKey!, EthereumAddress.fromHex(toAddress),
+                perWalletAmount);
           } else if (_selectedToken == 'USDT') {
             BigInt amountToSend = BigInt.from(perWalletAmount * 1e18);
-            print('Sending $perWalletAmount USDT from $mainWalletAddress to $toAddress');
-            await action.sendallUsdtBep20(mainWalletPrivateKey!, EthereumAddress.fromHex(toAddress), amountToSend);
+            print(
+                'Sending $perWalletAmount USDT from $mainWalletAddress to $toAddress');
+            await action.sendallUsdtBep20(
+                mainWalletPrivateKey!, EthereumAddress.fromHex(toAddress),
+                amountToSend);
           } else if (_selectedToken == 'KTR') {
             BigInt amountToSend = BigInt.from(perWalletAmount * 1e18);
-            print('Sending $perWalletAmount KTR from $mainWalletAddress to $toAddress');
-            await action.sendallKtrBep20(mainWalletPrivateKey!, EthereumAddress.fromHex(toAddress), amountToSend);
+            print(
+                'Sending $perWalletAmount KTR from $mainWalletAddress to $toAddress');
+            await action.sendallKtrBep20(
+                mainWalletPrivateKey!, EthereumAddress.fromHex(toAddress),
+                amountToSend);
           }
         } catch (e) {
           print('Error sending to $toAddress: $e');
@@ -137,28 +189,11 @@ class _SendAllScreenState extends State<SendAllScreen> {
     }
   }
 
-  void _showCountdownDialog(BuildContext context, int totalWaitTime) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return CountdownDialog(
-          totalWaitTime: totalWaitTime,
-          onSendComplete: () {
-            // After completion, close the dialog
-            Navigator.of(context).pop();
-          },
-        );
-      },
-    );
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:const Text('Send All Wallet List'),
+        title: const Text('Send All Wallet List', style: TextStyle(color: Colors.white,  ),),
         backgroundColor: Colors.green,
       ),
       body: Padding(
@@ -167,15 +202,17 @@ class _SendAllScreenState extends State<SendAllScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Token selection with logo and amount input
-            Row(children:[
-              Text(
-                'From: (${mainWalletAddress != null && mainWalletAddress!.length > 10
-                    ? '${mainWalletAddress!.substring(0, 5)}...${mainWalletAddress!.substring(mainWalletAddress!.length - 5)}'
-                    : mainWalletAddress})',
-                style: const TextStyle(color: Colors.green, fontSize: 18),
-              ),
-            ] ),
-            const SizedBox(height: 10,),
+            Row(
+              children: [
+                Text(
+                  'From: (${mainWalletAddress != null && mainWalletAddress!.length > 10
+                      ? '${mainWalletAddress!.substring(0, 5)}...${mainWalletAddress!.substring(mainWalletAddress!.length - 5)}'
+                      : mainWalletAddress})',
+                  style: const TextStyle(color: Colors.green, fontSize: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -226,11 +263,83 @@ class _SendAllScreenState extends State<SendAllScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            // Display the selected wallets count and amount per wallet
-            Text('Selected: $_selectedCount / ${_selectedWallets.length}'),
+
+            // Row for Selected and Check/Uncheck All button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Display the selected wallets count
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Selected: ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.green, // Màu xanh cho từ "Selected"
+                        ),
+                      ),
+                      TextSpan(
+                        text: '$_selectedCount / ${_selectedWallets.length}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedCount < _selectedWallets.length ? Colors.red : Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // TextButton for Check All / Uncheck All
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      if (_selectedCount == _selectedWallets.length) {
+                        // Nếu đã chọn tất cả, thì Uncheck tất cả
+                        _selectedWallets.updateAll((key, value) => false);
+                        _selectedCount = 0;
+                      } else {
+                        // Nếu chưa chọn tất cả, thì Check tất cả
+                        _selectedWallets.updateAll((key, value) => true);
+                        _selectedCount = _selectedWallets.length;
+                      }
+                      _calculatePerWalletAmount();
+                    });
+                  },
+                  child: Text(
+                    _selectedCount == _selectedWallets.length ? 'Uncheck All' : 'Check All',
+                    style: TextStyle(
+                      color: _selectedCount == _selectedWallets.length ? Colors.red : Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 10),
-            Text('Amount per wallet: $perWalletAmount $_selectedToken'),
+
+            // Display the amount per wallet
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(
+                    text: 'Amount per wallet: ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.green, // Màu xanh cho từ "Amount per wallet"
+                    ),
+                  ),
+                  TextSpan(
+                    text: '$perWalletAmount $_selectedToken',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.red, // Màu đỏ cho giá trị perWalletAmount
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
+
             // List of wallets with checkboxes
             Expanded(
               child: ListView.builder(
@@ -238,9 +347,9 @@ class _SendAllScreenState extends State<SendAllScreen> {
                 itemBuilder: (context, index) {
                   String walletName = wallets[index]['name'];
                   String address = wallets[index]['address'];
-                  double bnbBalance = wallets[index]['bnbBalance'] ?? 0.0;
-                  double usdtBalance = wallets[index]['usdtBalance'] ?? 0.0;
-                  double ktrBalance = wallets[index]['ktrBalance'] ?? 0.0; // Assuming KTR balance is also available
+                  String bnbBalance = wallets[index]['bnbBalance'];
+                  String usdtBalance = wallets[index]['usdtBalance'];
+                  String ktrBalance = wallets[index]['ktrBalance'];
 
                   // Shorten the address for display
                   String shortAddress = (address.length > 10)
@@ -258,16 +367,16 @@ class _SendAllScreenState extends State<SendAllScreen> {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: walletName, // Wallet name
+                              text: walletName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.green, // Style for wallet name
+                                color: Colors.green,
                               ),
                             ),
                             TextSpan(
-                              text: ': $shortAddress', // Shortened address
+                              text: ': $shortAddress',
                               style: const TextStyle(
-                                color: Colors.grey, // Style for the shortened address
+                                color: Colors.grey,
                               ),
                             ),
                           ],
@@ -349,7 +458,9 @@ class _SendAllScreenState extends State<SendAllScreen> {
       ),
     );
   }
+
 }
+
 class CountdownDialog extends StatefulWidget {
   final int totalWaitTime;
   final Function onSendComplete;

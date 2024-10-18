@@ -1,29 +1,34 @@
 import 'package:cryptowallet/swap_ktr_usdt.dart';
-import 'package:cryptowallet/wallet_create.dart'; // Assuming this file contains loadWalletFromJson()
+import 'package:cryptowallet/wallet_create.dart';
 import 'package:flutter/material.dart';
 import 'package:cryptowallet/services/session_manager.dart';
-import 'package:http/http.dart'; // Add this import for Web3Client
+import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart';
 
+import 'check_balance.dart';
+import 'check_price_ktr.dart';
 
 class SwapScreen extends StatefulWidget {
   const SwapScreen({super.key});
 
-
   @override
   _SwapScreenState createState() => _SwapScreenState();
-
 }
 
 class _SwapScreenState extends State<SwapScreen> {
   late Web3Client web3;
-  String? selectedWallet; // To handle dynamic wallet data
-  String? selectedCoinFrom = 'BNB'; // Default coin for swapping
-  String? selectedCoinTo = 'USDT'; // Target coin for swapping
+  String? selectedWallet;
+  String? selectedWalletAddress; // Thêm biến để lưu trữ địa chỉ ví đã chọn
+  String? selectedPrivateKey; // Thêm biến để lưu trữ private key của ví đã chọn
+  String? selectedCoinFrom = 'BNB';
+  String? selectedCoinTo = 'USDT';
   final TextEditingController amountController = TextEditingController();
+  bool isLoading = false; // Trạng thái loading
 
-  List<String> wallets = []; // Wallets will be loaded dynamically
+
+  List<Map<String, String>> wallets = []; // Chứa tên ví, địa chỉ và privateKey
   final List<String> coins = ['BNB', 'USDT', 'KTR'];
+  final TokenBalanceChecker _balanceChecker = TokenBalanceChecker();
 
   // Variables to hold balance information
   double totalBalance = 0.0;
@@ -31,40 +36,80 @@ class _SwapScreenState extends State<SwapScreen> {
   double usdtBalance = 0.0;
   double ktrBalance = 0.0;
 
-
-
   @override
   void initState() {
     super.initState();
     _initializeWeb3();
     _loadWalletData();
-    //deleteWalletJson();
   }
-
 
   void _initializeWeb3() {
     const bscUrl = 'https://smart-yolo-wildflower.bsc.quiknode.pro/15e23273e4927b475d4a2b0b40c1231d9c7b7e91';
     web3 = Web3Client(bscUrl, Client());
   }
+
+  // Load wallets and fetch real balances
   Future<void> _loadWalletData() async {
     try {
       String? pin = SessionManager.userPin;
       final walletDataDecrypt = await loadWalletPINFromJson(pin!);
       if (walletDataDecrypt != null && walletDataDecrypt.containsKey('wallet_names')) {
         setState(() {
-          wallets = List<String>.from(walletDataDecrypt['wallet_names']);
-          selectedWallet = wallets.isNotEmpty ? wallets[0] : null; // Default to the first wallet if available
-
-          // Load balances (use actual data extraction from JSON)
-          bnbBalance = walletDataDecrypt['bnb_balance'] ?? 0.0;
-          usdtBalance = walletDataDecrypt['usdt_balance'] ?? 0.0;
-          ktrBalance = walletDataDecrypt['ktr_balance'] ?? 0.0;
-          totalBalance = bnbBalance + usdtBalance + ktrBalance;
+          // Lưu cả tên ví, địa chỉ và privateKey
+          wallets = List<Map<String, String>>.generate(
+            walletDataDecrypt['wallet_names'].length,
+                (index) => {
+              'name': walletDataDecrypt['wallet_names'][index],
+              'address': walletDataDecrypt['addresses'][index],
+              'privateKey': walletDataDecrypt['decrypted_private_keys'][index],
+            },
+          );
+          selectedWallet = wallets.isNotEmpty ? wallets[0]['name'] : null;
+          selectedWalletAddress = wallets.isNotEmpty ? wallets[0]['address'] : null;
+          selectedPrivateKey = wallets.isNotEmpty ? wallets[0]['privateKey'] : null;
         });
+
+        // Fetch balance for the first wallet
+        if (wallets.isNotEmpty) {
+          await _fetchWalletBalances(wallets[0]['address']!);
+        }
       }
     } catch (e) {
       print('Failed to load wallet data: $e');
     }
+  }
+
+  Future<void> _fetchWalletBalances(String address) async {
+    try {
+      double bnbRawBalance = (await _balanceChecker.getBnbBalance(address))!;
+      double usdtRawBalance = (await _balanceChecker.getUsdtBalance(address))!;
+      double ktrRawBalance = (await _balanceChecker.getKtrBalance(address))!;
+
+      // Chuyển đổi BNB và KTR sang USDT
+      double bnbInUsdt = await convertToUsdt('BNB', bnbRawBalance);
+      double ktrInUsdt = await convertToUsdt('KTR', ktrRawBalance);
+
+      // Tính tổng số dư theo USDT
+      setState(() {
+        bnbBalance = bnbRawBalance;
+        usdtBalance = usdtRawBalance;
+        ktrBalance = ktrRawBalance;
+        totalBalance = bnbInUsdt + usdtBalance + ktrInUsdt;
+      });
+    } catch (e) {
+      print('Failed to fetch balances: $e');
+    }
+  }
+
+  Future<double> convertToUsdt(String token, double amount) async {
+    if (token == 'BNB') {
+      String bnbPrice = await checkPriceBNB(1);
+      return amount * double.parse(bnbPrice);
+    } else if (token == 'KTR') {
+      String ktrPrice = await checkPriceKTR(1);
+      return amount * double.parse(ktrPrice);
+    }
+    return 0.0;
   }
 
   @override
@@ -73,253 +118,268 @@ class _SwapScreenState extends State<SwapScreen> {
       appBar: AppBar(
         title: const Text('Swap Coins'),
       ),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Card to select wallet
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Colors.green, width: 2),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Select Wallet',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButton<String>(
-                      value: selectedWallet,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_downward),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedWallet = newValue;
-                        });
-                      },
-                      items: wallets.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
+        children: [
+          // Wallet Selection
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Colors.green, width: 2),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Select Wallet',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButton<String>(
+                    value: selectedWallet,
+                    isExpanded: true,
+                    icon: const Icon(Icons.arrow_downward),
+                    onChanged: (String? newValue) async {
+                      setState(() {
+                        selectedWallet = newValue;
+                        // Lấy địa chỉ và privateKey của ví được chọn
+                        Map<String, String> selectedWalletData = wallets
+                            .firstWhere((wallet) => wallet['name'] == newValue);
+                        selectedWalletAddress = selectedWalletData['address'];
+                        selectedPrivateKey = selectedWalletData['privateKey'];
+                      });
+
+                      // Fetch balance for the selected wallet
+                      if (selectedWalletAddress != null) {
+                        await _fetchWalletBalances(selectedWalletAddress!);
+                      }
+                    },
+                    items: wallets.map<DropdownMenuItem<String>>((Map<String, String> wallet) {
+                      return DropdownMenuItem<String>(
+                        value: wallet['name'],
+                        child: Text(wallet['name']!),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+          ),
+          const SizedBox(height: 20),
 
-            // Card to display total and individual balances
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Colors.green, width: 2),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Total Balance',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    Text('Total: \$${totalBalance.toStringAsFixed(2)}'),
-                    const SizedBox(height: 10),
-
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/bnb-bnb-logo.png',
-                          width: 24,
-                          height: 24,
-                        ),
-                        const SizedBox(width: 10),
-                        Text('${bnbBalance.toStringAsFixed(4)} BNB'),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    // USDT Balance with Logo
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/usdt_logo.png',
-                          width: 24,
-                          height: 24,
-                        ),
-                        const SizedBox(width: 10),
-                        Text('${usdtBalance.toStringAsFixed(2)} USDT'),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    // KTR Balance with Logo
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/logo_ktr.png',
-                          width: 28,
-                          height: 28,
-                        ),
-                        const SizedBox(width: 6),
-                        Text('${ktrBalance.toStringAsFixed(2)} KTR'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+          // Total and individual balances
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Colors.green, width: 2),
             ),
-            const SizedBox(height: 20),
-
-            // Card for Swap section
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Colors.green, width: 2),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Swap Coins',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Coin From Selection
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('From:'),
-                        DropdownButton<String>(
-                          value: selectedCoinFrom,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedCoinFrom = newValue;
-                            });
-                          },
-                          items: coins.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Amount to Swap Input
-                    TextField(
-                      controller: amountController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Enter amount to swap',
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Total Balance',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('Total: \$${totalBalance.toStringAsFixed(2)}'),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/bnb-bnb-logo.png',
+                        width: 24,
+                        height: 24,
                       ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 10),
+                      const SizedBox(width: 10),
+                      Text('${bnbBalance.toStringAsFixed(4)} BNB'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/usdt_logo.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                      const SizedBox(width: 10),
+                      Text('${usdtBalance.toStringAsFixed(2)} USDT'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/logo_ktr.png',
+                        width: 28,
+                        height: 28,
+                      ),
+                      const SizedBox(width: 6),
+                      Text('${ktrBalance.toStringAsFixed(2)} KTR'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
 
-                    // Coin To Selection
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('To:'),
-                        DropdownButton<String>(
-                          value: selectedCoinTo,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedCoinTo = newValue;
-                            });
-                          },
-                          items: coins.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Swap Button
-                    ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          // Chuyển đổi số lượng từ TextField sang double
-                          final inputNumber = double.parse(amountController.text);
-
-                          // Gọi hàm buySellTokenKTR
-                          String? txHash = await buySellTokenKTR(
-                            walletAddress: "0xDa22644F364155dFb41Ae756484177906D925F3f",
-                            privateKey: '4828b59ab795f0a667c321a721f0d6661cd57ee4510b71fdbe26ba51e0cd6a8a',
-                            isBuy: selectedCoinFrom == 'KTR',
-                            inputNumber: inputNumber.toInt(),
-                          );
-
-                          if (txHash != null) {
-                            print('Giao dịch đã được gửi với mã băm: $txHash');
-
-                            // Chờ đợi giao dịch được xử lý
-                            var txReceipt;
-                            int retryCount = 0;
-                            do {
-                              txReceipt = await web3.getTransactionReceipt(txHash);
-                              if (txReceipt == null) {
-                                // Đợi một vài giây trước khi thử lại
-                                await Future.delayed(Duration(seconds: 5));
-                              }
-                              retryCount++;
-                            } while (txReceipt == null && retryCount < 12); // Thử lại tối đa 1 phút
-
-                            // Kiểm tra kết quả giao dịch
-                            if (txReceipt != null && txReceipt.status!) {
-                              print("Giao dịch đã được xác nhận thành công!");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Swap success! TX Hash: $txHash')),
-                              );
+          // Swap section
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Colors.green, width: 2),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Swap Coins',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('From:'),
+                      DropdownButton<String>(
+                        value: selectedCoinFrom,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedCoinFrom = newValue;
+                            amountController.clear(); // Xóa giá trị khi thay đổi loại token
+                            if (selectedCoinFrom == 'KTR') {
+                              selectedCoinTo = 'USDT';
+                            } else if (selectedCoinFrom == 'USDT') {
+                              selectedCoinTo = 'BNB';
                             } else {
-                              print("Giao dịch thất bại hoặc mất quá nhiều thời gian.");
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Swap failed or took too long!')),
-                              );
+                              selectedCoinTo = 'USDT';
                             }
-                          } else {
-                            print('Gửi giao dịch thất bại.');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Swap failure!')),
-                            );
-                          }
-                        } catch (e) {
-                          print('Đã xảy ra lỗi: $e');
+                          });
+                        },
+                        items: coins.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: amountController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Enter amount to swap',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('To:'),
+                      DropdownButton<String>(
+                        value: selectedCoinTo,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedCoinTo = newValue;
+                          });
+                        },
+                        items: coins
+                            .where((coin) => coin != selectedCoinFrom)
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Nút Swap và hiển thị trạng thái Loading
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton(
+                    onPressed: () async {
+                      double enteredAmount = double.tryParse(amountController.text) ?? 0.0;
+
+                      if (enteredAmount <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid amount.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        if (selectedCoinFrom == 'KTR' && selectedCoinTo == 'USDT') {
+                          final txHash = await buySellTokenKTR(
+                            walletAddress: selectedWalletAddress ?? '',
+                            privateKey: selectedPrivateKey ?? '',
+                            isBuy: true, // Bán KTR lấy USDT
+                            inputNumber: enteredAmount.toInt(),
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('An error occurred.: $e')),
+                            SnackBar(content: Text('Transaction successful! TX Hash: $txHash')),
+                          );
+                        } else if (selectedCoinFrom == 'USDT' && selectedCoinTo == 'KTR') {
+                          final txHash = await buySellTokenKTR(
+                            walletAddress: selectedWalletAddress ?? '',
+                            privateKey: selectedPrivateKey ?? '',
+                            isBuy: false, // Mua KTR bằng USDT
+                            inputNumber: enteredAmount.toInt(),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Transaction successful! TX Hash: $txHash')),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Invalid token pair selected.'),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                         }
-                      },
-                      child: const Text('Swap Now'),
-                    ),
-                  ],
-                ),
+
+                        // Cập nhật lại số dư sau khi giao dịch hoàn tất
+                        await _fetchWalletBalances(selectedWalletAddress!);
+                      } catch (e) {
+                        print('Transaction failed: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Transaction failed: $e')),
+                        );
+                      } finally {
+                        setState(() {
+                          isLoading = false;
+                        });
+                      }
+                    },
+                    child: const Text('Swap Now'),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
