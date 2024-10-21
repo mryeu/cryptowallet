@@ -1,3 +1,4 @@
+import 'package:cryptowallet/mixins/check_time_claim_mixin.dart';
 import 'package:cryptowallet/play_group.dart';
 import 'package:cryptowallet/services/member_service.dart';
 import 'package:cryptowallet/services/session_manager.dart';
@@ -104,6 +105,53 @@ class _PlayScreenState extends State<PlayScreen> {
       setState(() {
         wallet['isMember'] = isMember ?? false;
       });
+    }
+  }
+
+  Future<void> _onAddAutoPlay(Map<String, dynamic> wallet) async {
+    try {
+      bool can_play = await checkPlay(wallet['address']) ?? false;
+      TokenBalanceChecker checker = TokenBalanceChecker();
+      MemberService memberService = MemberService();
+      double? usdt = await checker.getUsdtBalance(wallet['address']);
+
+      if (can_play) {
+        if (usdt! >= 480) {
+            String txHash = await memberService.addDeposit(context, wallet['privateKey'], wallet['address']);  
+            ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Add auto play success $txHash',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please deposit money to address!',
+              ),
+              backgroundColor: Colors.yellow,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please waiting play after add auto play',
+              ),
+              backgroundColor: Colors.yellow,
+            ),
+          );
+      }
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Add atuo play error $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
     }
   }
 
@@ -338,6 +386,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                       onPressed: wallets[index]['isMember']
                                           ? () async {
                                         // Hành động khi nhấn nút
+                                        _onAddAutoPlay(wallets[index]);
                                         try {
                                           TransactionServiceMember memberService = TransactionServiceMember();
                                         } catch (e) {
