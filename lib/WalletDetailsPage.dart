@@ -358,7 +358,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Index: ${index + 1}, Played: ${member['info'][1] ? 'Claimed' : 'Played'}, TxID: ${member['TxID']}'),
+                              Text('Index: ${index + 1}, Played: ${member['info'][1] == true ? 'Claimed' : 'Played'}, TxID: ${member['TxID']}'),
                               const SizedBox(height: 5),
                               Text('Amount: ${31 + ((31 * member['info'][0]) / 100000)} USDT'),
                               const SizedBox(height: 5),
