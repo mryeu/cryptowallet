@@ -1,3 +1,4 @@
+import 'package:cryptowallet/wallet_create.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart';
 
@@ -120,6 +121,11 @@ Future<String?> buySellTokenKTR({
 
     // Đợi kết quả giao dịch swap
     await _waitForTransactionReceipt(web3, txHash);
+    await saveTransaction(
+        walletAddress,
+        txHash,
+        isBuy ? 'Buy' : 'Sell'
+    );
 
     return txHash;
   } catch (e) {
@@ -127,6 +133,7 @@ Future<String?> buySellTokenKTR({
     return null;
   }
 }
+
 
 // Hàm chờ giao dịch được xử lý
 Future<void> _waitForTransactionReceipt(Web3Client web3, String txHash) async {

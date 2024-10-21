@@ -13,6 +13,7 @@ import 'package:web3dart/web3dart.dart';
 import 'package:pointycastle/export.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Import compute for heavy operations
+import 'package:intl/intl.dart';
 
 
 
@@ -515,6 +516,51 @@ Future<Map<String, dynamic>> importWalletFromPrivateKey(String privateKey, Strin
     throw Exception('Import ví thất bại');
   }
 }
+
+
+Future<void> saveTransaction(String walletAddress, String hash, String type) async {
+  try {
+    // Lấy đường dẫn file transactions.json
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/transactions.json');
+
+    List<dynamic> transactions = [];
+
+    // Kiểm tra xem file có tồn tại không
+    if (await file.exists()) {
+      String fileContents = await file.readAsString();
+
+      // Kiểm tra nếu file trống, hoặc không có dữ liệu hợp lệ
+      if (fileContents.isNotEmpty) {
+        try {
+          transactions = json.decode(fileContents) as List<dynamic>;
+        } catch (e) {
+          print('Lỗi khi giải mã JSON: $e');
+          transactions = [];
+        }
+      }
+    }
+
+    // Tạo giao dịch mới
+    Map<String, dynamic> newTransaction = {
+      'address': walletAddress,
+      'hash': hash,
+      'time': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'type': type,
+    };
+
+    // Thêm giao dịch mới vào danh sách
+    transactions.add(newTransaction);
+
+    // Ghi lại vào file JSON
+    await file.writeAsString(json.encode(transactions));
+
+    print("Transaction saved successfully.");
+  } catch (e) {
+    print("Error saving transaction: $e");
+  }
+}
+
 
 
 

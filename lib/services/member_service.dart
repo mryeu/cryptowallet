@@ -6,7 +6,8 @@ import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart';
 import 'dart:math';
 
-import '../swap_ktr_usdt.dart'; // Import for using the pow function
+import '../swap_ktr_usdt.dart';
+import '../wallet_create.dart'; // Import for using the pow function
 
 class MemberService {
   final String rpcUrl = 'https://autumn-hidden-energy.bsc.quiknode.pro/9c02ac546716d9eb7dfec7226dd03270a924d3c3';
@@ -462,6 +463,12 @@ class MemberService {
           credentials, approveTransaction);
       print('Approval transaction hash: $approveTxHash');
 
+        await saveTransaction(
+          approveTxHash,
+          approveTxHash,
+          'Approve',
+        );
+
       // Bước 2: Gọi hàm play sau khi approve
       final playContract = DeployedContract(
           ContractAbi.fromJson(playAbi, 'PlayContract'),
@@ -480,6 +487,13 @@ class MemberService {
       final playTxHash = await _signAndSendTransaction(
           credentials, playTransaction);
       print('Play transaction hash: $playTxHash');
+
+        await saveTransaction(
+          accountAddress.hex,
+          playTxHash,
+          'Play',
+        );
+
 
       return playTxHash;
     } catch (e) {
@@ -573,6 +587,13 @@ class MemberService {
       }
 
       print('Claim transaction hash: $txHash');
+
+        await saveTransaction(
+          accountAddress.hex,
+          txHash,
+          'Claim',
+        );
+
       return txHash;
     } catch (e) {
       // General error handling
@@ -588,12 +609,18 @@ class MemberService {
   }) async {
     try {
       String? txHash = await buySellTokenKTR(walletAddress: walletAddress, privateKey: privateKey, isBuy: true, inputNumber: inputNumber);
-      print('=======sưap $walletAddress $privateKey $inputNumber $txHash');
-      return txHash;
+      print('=======swap $walletAddress $privateKey $inputNumber $txHash');
+      await saveTransaction(
+        walletAddress,
+        txHash!,
+        'Swap Play',
+      );
+          return txHash;
     }
     catch(e) {
       print('===>error swap $e');
     }
+    return null;
   }
 
   Future<void> executeActionsForWallets(

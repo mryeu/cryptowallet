@@ -155,7 +155,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
-    <ProjectReference Include="D:\cryptowallet\build\windows\x64\runner\ALL_BUILD.vcxproj">
+    <ProjectReference Include="D:\cryptowallet\build\windows\x64\plugins\url_launcher_windows\ALL_BUILD.vcxproj">
       <Project>{66B3CBAB-C285-3A3E-ADDD-6ACAFF62CCB7}</Project>
       <Name>ALL_BUILD</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

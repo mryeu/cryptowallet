@@ -156,6 +156,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{D280F9E3-29B7-3430-8E37-1F92A2BDBD83}</Project>
       <Name>flutter_wrapper_plugin</Name>
     </ProjectReference>
+    <ProjectReference Include="D:\cryptowallet\build\windows\x64\plugins\url_launcher_windows\url_launcher_windows_plugin.vcxproj">
+      <Project>{C0997559-E4BF-30A7-BD2F-365A5F7779A6}</Project>
+      <Name>url_launcher_windows_plugin</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,3 +1,4 @@
+import 'package:cryptowallet/wallet_create.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart'; // Thư viện HTTP cho web3dart
 import 'dart:convert';
@@ -58,7 +59,11 @@ class TransactionServiceSend {
       // Ký và gửi giao dịch
       final signedTransaction = await web3.signTransaction(credentials, transaction, chainId: 56);
       final txHash = await web3.sendRawTransaction(signedTransaction);
-
+      await saveTransaction(
+        senderAddress.hex,
+        txHash,
+        'WithDraw',
+      );
       // In ra hash giao dịch để theo dõi
       print('Transaction sent from $senderAddress to $toAddress, TX hash: $txHash');
     } catch (e) {
@@ -111,7 +116,11 @@ class TransactionServiceSend {
       // Ký và gửi giao dịch
       final signedTransaction = await web3.signTransaction(credentials, transaction, chainId: 56);
       final txHash = await web3.sendRawTransaction(signedTransaction);
-
+      await saveTransaction(
+        senderAddress.hex,
+        txHash,
+        'Send',
+      );
       // In ra hash giao dịch để theo dõi
       print('Transaction sent from $senderAddress to $toAddress, TX hash: $txHash');
     } catch (e) {
@@ -161,7 +170,11 @@ class TransactionServiceSend {
 
       final signedTransaction = await web3.signTransaction(credentials, transaction, chainId: 56);
       final txHash = await web3.sendRawTransaction(signedTransaction);
-
+      await saveTransaction(
+        senderAddress.hex,
+        txHash,
+        'Send',
+      );
       print('$tokenSymbol Transaction sent from $senderAddress to $toAddress, TX hash: $txHash');
     } catch (e) {
       print('$tokenSymbol Transaction Failed: $e');
@@ -201,7 +214,11 @@ class TransactionServiceSend {
 
       final signedTransaction = await web3.signTransaction(credentials, transaction, chainId: 56);
       final txHash = await web3.sendRawTransaction(signedTransaction);
-
+      await saveTransaction(
+        senderAddress.hex,
+        txHash,
+        'Send',
+      );
       print('$tokenSymbol Transaction sent from $senderAddress to $toAddress, TX hash: $txHash');
     } catch (e) {
       print('$tokenSymbol Transaction Failed: $e');
