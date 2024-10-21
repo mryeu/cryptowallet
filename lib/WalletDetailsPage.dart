@@ -69,11 +69,30 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
       ScanTransaction transaction = ScanTransaction();
       FilterEntity filter = FilterEntity(keyword: '', limit: 20, page: 1);
       Map<String, dynamic>? dataPlay = await transaction.scanServer(wallet['address'], filter);
+      List<Map<String, dynamic>> dataUpdate = [];
 
+      for (var entry in dataPlay?['data'] ?? []) {
+        var member = entry;
+
+        int timestamp = int.tryParse(member['timestamp'] ?? '0') ?? 0;
+        bool isClaim = checkClaim(timestamp);
+
+        if (isClaim) {
+          int day = (timestamp / 86400).floor() - 20;
+          Map<String, dynamic> infoUpdate = await memberService.getVote(member['address'] ?? '', day);
+          print('======info new $infoUpdate');
+          member['info'] = [infoUpdate['percent'], infoUpdate['claimed']];
+        }
+
+        dataUpdate.add(member);
+      }
+
+
+      
       setState(() {
         // wallet['played'] = dataPlay;
         print('data $dataPlay');
-        wallet['histories'] = dataPlay?['data'];
+        wallet['histories'] = dataUpdate;
         isLoading = false;
       });
     } catch (e) {
@@ -339,9 +358,11 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Index: ${index + 1}, Played: ${member['statistic']}, TxID: ${member['TxID']}, Time claim: ${timeClaim}'),
+                              Text('Index: ${index + 1}, Played: ${member['info'][0] ? 'Claimed' : 'Played'}, TxID: ${member['TxID']}'),
                               const SizedBox(height: 5),
-                              // Text('Time Countdown: ${member['countdown']}'),
+                              Text('Amount: ${31 + ((31 * member['info'][0]) / 100000)} USDT'),
+                              const SizedBox(height: 5),
+                              Text('Time claim: ${timeClaim}'),
                               const SizedBox(height: 5),
                               ElevatedButton(
                                 onPressed: isClaim ? () {
