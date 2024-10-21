@@ -414,7 +414,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                 ),
                                 // Cột 2: Chứa thông tin Played, TxID, và Time Claim
                                 Expanded(
-                                  flex: 5,  // Chiếm 3 phần
+                                  flex: 5,  // Chiếm 5 phần
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -426,16 +426,16 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                 ),
                                 // Cột 3: Nút Action (Claim hoặc Claimed)
                                 Expanded(
-                                  flex: 3,  // Chiếm 1 phần
+                                  flex: 3,  // Chiếm 3 phần
                                   child: ElevatedButton(
-                                    onPressed: isClaim
+                                    onPressed: member['info'][1] == true ? null : isClaim
                                         ? () {
                                       _onClaim(member);
                                     }
-                                        : null,
+                                        : null,  // Disable button if already Claimed
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: member['info'][1] == true
-                                          ? Colors.orange // Màu cam khi đã Claimed
+                                          ? Colors.orange // Màu cam khi đã Claimed, dù đã disable vẫn giữ màu
                                           : isClaim == true
                                           ? Colors.green // Màu xanh khi có thể Claim
                                           : Colors.grey, // Màu xám khi không thể Claim
@@ -445,7 +445,8 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                           ? 'Claimed' // Hiển thị Claimed khi đã Claim
                                           : isClaim
                                           ? 'Claim' // Hiển thị Claim nếu có thể Claim
-                                          : 'Interactive',  style:  TextStyle(color: Colors.white),
+                                          : 'Interactive',
+                                      style: const TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),
