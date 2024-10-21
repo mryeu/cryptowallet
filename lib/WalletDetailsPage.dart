@@ -91,10 +91,31 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
 
 
       if (usdt! >= 32) {
-      final txHash = await memberService.approveAndPlay(wallet['privateKey'] ?? '', EthereumAddress.fromHex(wallet['address'] ?? ''));
+        final txHash = await memberService.approveAndPlay(wallet['privateKey'] ?? '', EthereumAddress.fromHex(wallet['address'] ?? ''));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Play success $txHash',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Don't insufficient 32 USDT, Please deposit money to address",
+          ),
+          backgroundColor: Colors.yellow,
+        ),
+      );
       }
     } catch (e) {
-      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Play error $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -107,9 +128,30 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
 
       if (usdt! >= 480) {
           String txHash = await memberService.addDeposit(context, wallet['privateKey'], wallet['address']);  
+          ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Add auto play success $txHash',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please deposit money to address!',
+            ),
+            backgroundColor: Colors.yellow,
+          ),
+        );
       }
     } catch (e) {
-      
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Add atuo play error $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
     }
   }
 
@@ -123,10 +165,23 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
       String txHash =  await memberService.onClaim(wallet['privateKey'] ?? '', EthereumAddress.fromHex(wallet['address'] ?? ''), day);
       print('txHash $txHash');
       if (txHash != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Claim success $txHash',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
         _loadWalletDetail();
       }
     } catch (e) {
-      
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Claim error $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
     }
   }
 
