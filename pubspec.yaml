@@ -101,6 +101,7 @@ flutter:
     - assets/images/sort.svg
     - assets/images/login_background.PNG
     - assets/images/loading.gif
+    - assets/images/feature2.jpg
 
 
   # To add assets to your application, add an assets section, like this:

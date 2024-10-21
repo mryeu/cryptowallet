@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_carousel_widget/flutter_carousel_widget.dart'; // Import thư viện mới
+import 'package:http/http.dart' as http;
+import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,31 +11,47 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0; // Chỉ số của card đang hiển thị trong carousel
-  final List<String> carouselItems = [
-    'Feature design 1',
-    'Feature design 2',
-    'Feature design 3',
-    'Feature design 4',
-    'Feature design 5',
-  ];
+  bool _isDisposed = false; // Track if the widget is disposed
+  List<dynamic> newsItems = [];
 
-  final List<String> newsItems = [
-    'News Item 1: Breaking News!',
-    'News Item 2: Latest Update!',
-    'News Item 3: Flutter 3.0 Released!',
-    'News Item 4: New Features in Dart!',
-    'News Item 5: Hotfix Update Available!',
-    'News Item 6: Flutter Dev Conference!',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchNewsData();
+  }
+
+
+  Future<void> fetchNewsData() async {
+    try {
+      final response = await http.get(Uri.parse('https://kittyrun.io/api/content-mobile'));
+      if (response.statusCode == 200 && mounted) {
+        setState(() {
+          newsItems = json.decode(response.body);
+        });
+      } else {
+        print('Failed to load data');
+      }
+    } catch (e) {
+      if (!_isDisposed) {
+        print('Error fetching data: $e');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
-          const SizedBox(height: 20,),
-          FlutterCarousel(
+          const SizedBox(height: 20),
+          newsItems.isNotEmpty
+              ? FlutterCarousel(
             options: CarouselOptions(
               autoPlay: true,
               autoPlayInterval: const Duration(seconds: 5),
@@ -41,42 +59,58 @@ class _HomeScreenState extends State<HomeScreen> {
               aspectRatio: 25 / 9,
               viewportFraction: 1,
               onPageChanged: (index, reason) {
-                setState(() {
-                  _currentIndex = index;
-                });
+                if (mounted) {
+                  setState(() {
+                    // Update the state
+                  });
+                }
               },
             ),
-            items: carouselItems.map((item) {
-              return Builder(
-                builder: (BuildContext context) {
-                  return Card(
-                    color: Colors.green[300],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        item,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+            items: List.generate(
+              newsItems.take(5).length,
+                  (index) {
+                var item = newsItems[index];
+                return Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        image: DecorationImage(
+                          image: AssetImage(item['imagesource']),
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                  );
-                },
-              );
-            }).toList(),
-          ),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.black.withOpacity(0.5),
+                      ),
+                      child: Center(
+                        child: Text(
+                          item['title'],
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          )
+              : const CircularProgressIndicator(),
           const SizedBox(height: 20),
-          // Danh sách tin tức với chiều cao 50
           Expanded(
             child: ListView.builder(
               itemCount: newsItems.length,
               itemBuilder: (context, index) {
+                var item = newsItems[index];
                 return SizedBox(
-                  height: 150,
+                  height: 100,
                   child: Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(
@@ -85,12 +119,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: ListTile(
                       title: Text(
-                        newsItems[index],
+                        item['title'],
                         style: const TextStyle(fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        item['content'],
+                        style: const TextStyle(fontSize: 12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                       leading: const Icon(Icons.fiber_new, color: Colors.green),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {
+                        _showNewsDetailPopup(context, item);
+                      },
                     ),
                   ),
                 );
@@ -99,6 +140,69 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showNewsDetailPopup(BuildContext context, dynamic newsItem) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (BuildContext context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          maxChildSize: 0.75,
+          minChildSize: 0.5,
+          initialChildSize: 0.75,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'News Detail',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      newsItem['title'],
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      newsItem['content'],
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Additional details about the news...',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Close'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

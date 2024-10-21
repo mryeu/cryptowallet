@@ -7,6 +7,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class WalletDetailsPage extends StatefulWidget {
   final Map<String, dynamic> wallet;
@@ -19,10 +21,13 @@ class WalletDetailsPage extends StatefulWidget {
 class _WalletDetailsState extends State<WalletDetailsPage> {
   late Map<String, dynamic> wallet;
   bool isLoading = false;
+  bool isLoadinglist = true;
+
   @override
   void initState() {
     super.initState();
     _loadWalletDetail();
+    loadData();
   }
 
   Future<void> _loadWalletDetail() async {
@@ -102,7 +107,13 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
       // Handle the error (e.g., print to console or show an error message)
     }
   }
+  void loadData() async {
 
+    await Future.delayed(const Duration(seconds: 3));
+    setState(() {
+      isLoadinglist = false;
+    });
+  }
   Future<void> _onPlay() async {
     try {
       wallet = Map<String, dynamic>.from(widget.wallet);
@@ -374,7 +385,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                     : null,
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor: Colors.white,
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: Colors.blueAccent,
                                 ),
                                 child: Text(
                                   wallet['is_playing'] == true ? 'WaitPlay' : 'Play',
@@ -395,7 +406,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                     : null,
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor: Colors.white,
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: Colors.yellow,
 
                                 ),
                                 child: const Text(
@@ -422,88 +433,120 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                 borderRadius: BorderRadius.circular(12.0),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    
-                    Text('Played Management ${ isLoading ?  0 : (wallet['info']?['totalVote'] ?? 0)} / ${isLoading ? 0 : (wallet['info']?['totalClaim'] ?? 0)}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: (wallet['histories'] ?? []).length,
-                      itemBuilder: (context, index) {
-                        var member = wallet['histories'][index];
-                        bool isClaim = checkClaim(int.parse(member['timestamp']));
-                        String timeClaim = formatTimeEnd(int.parse(member['timestamp']));
-                        String shortTxID = member['TxID'].substring(0, 5);  // Rút gọn TxID còn 5 ký tự
+                    // Kiểm tra trạng thái loading và hiển thị loading indicator
+                    isLoading
+                        ? const Center(
+                      child: CircularProgressIndicator(),  // Hiển thị vòng xoay chờ
+                    )
+                        : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Played Management ${isLoading ? 0 : (wallet['info']?['totalVote'] ?? 0)} / ${isLoading ? 0 : (wallet['info']?['totalClaim'] ?? 0)}',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: (wallet['histories'] ?? []).length,
+                          itemBuilder: (context, index) {
+                            var member = wallet['histories'][index];
+                            bool isClaim = checkClaim(int.parse(member['timestamp']));
+                            String timeClaim = formatTimeEnd(int.parse(member['timestamp']));
+                            String shortTxID = member['TxID'].substring(0, 5);  // Rút gọn TxID còn 5 ký tự
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: member['info'][1] == true || !isClaim ? Colors.green : Colors.red, // Xanh nếu đã claim, đỏ nếu interactive
-                                width: 2.0,
-                              ),
-                              borderRadius: BorderRadius.circular(8), // Bo góc cho đường viền
-                            ),
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                // Cột 1: Hiển thị index (#)
-                                Expanded(
-                                  flex: 1,  // Chiếm 1 phần
-                                  child: Text(
-                                    '#${index + 1}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: GestureDetector(
+                                onTap: () async {
+                                  // Mở BscScan với TxID khi click vào item
+                                  final url = 'https://bscscan.com/tx/${member['TxID']}';
+                                  if (await canLaunch(url)) {
+                                    await launch(url);
+                                  } else {
+                                    throw 'Could not launch $url';
+                                  }
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: member['info'][1] == true || !isClaim ? Colors.green : Colors.red, // Xanh nếu đã claim, đỏ nếu interactive
+                                      width: 1.0,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8), // Bo góc cho đường viền
                                   ),
-                                ),
-                                // Cột 2: Chứa thông tin Played, TxID, và Time Claim
-                                Expanded(
-                                  flex: 5,  // Chiếm 5 phần
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
                                     children: [
-                                      Text('Played: ${member['info'][1] == true ? 'Claimed' : 'Played'}'),
-                                      Text('TxID: $shortTxID'),  // Rút gọn TxID chỉ còn 5 ký tự
-                                      Text('Time claim: $timeClaim'),
+                                      // Cột 1: Hiển thị index (#)
+                                      Expanded(
+                                        flex: 1,  // Chiếm 1 phần
+                                        child: Text(
+                                          '#${index + 1}',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      // Cột 2: Chứa thông tin Played, TxID, và Time Claim
+                                      Expanded(
+                                        flex: 7,  // Chiếm 7 phần
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text('Played: ${member['info'][1] == true ? 'Claimed' : 'Played'}'),
+                                            Text('TxID: $shortTxID'),  // Rút gọn TxID chỉ còn 5 ký tự
+                                            Text('Time claim: $timeClaim'),
+                                          ],
+                                        ),
+                                      ),
+                                      // Cột 3: Nút Action (Claim hoặc Claimed)
+                                      Expanded(
+                                        flex: 5,  // Chiếm 3 phần
+                                        child: ElevatedButton(
+                                          onPressed: member['info'][1] == true
+                                              ? () {
+                                            // Hiển thị Snackbar khi nút "Claimed" được nhấn
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Reward Claimed'),
+                                              ),
+                                            );
+                                          }
+                                              : isClaim
+                                              ? () {
+                                            _onClaim(member, wallet['histories']);
+                                          }
+                                              : null,  // Disable button if already Claimed
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: member['info'][1] == true
+                                                ? Colors.yellow // Màu vàng khi đã Claimed
+                                                : isClaim == true
+                                                ? Colors.green // Màu xanh khi có thể Claim
+                                                : Colors.grey, // Màu xám khi không thể Claim
+                                          ),
+                                          child: Text(
+                                            member['info'][1] == true
+                                                ? 'Claimed' // Hiển thị Claimed khi đã Claim
+                                                : isClaim
+                                                ? 'Claim' // Hiển thị Claim nếu có thể Claim
+                                                : 'Interactive',
+                                            style: const TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                // Cột 3: Nút Action (Claim hoặc Claimed)
-                                Expanded(
-                                  flex: 3,  // Chiếm 3 phần
-                                  child: ElevatedButton(
-                                    onPressed: member['info'][1] == true ? null : isClaim
-                                        ? () {
-                                      _onClaim(member, wallet['histories']);
-                                    }
-                                        : null,  // Disable button if already Claimed
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: member['info'][1] == true
-                                          ? Colors.orange // Màu cam khi đã Claimed, dù đã disable vẫn giữ màu
-                                          : isClaim == true
-                                          ? Colors.green // Màu xanh khi có thể Claim
-                                          : Colors.grey, // Màu xám khi không thể Claim
-                                    ),
-                                    child: Text(
-                                      member['info'][1] == true
-                                          ? 'Claimed' // Hiển thị Claimed khi đã Claim
-                                          : isClaim
-                                          ? 'Claim' // Hiển thị Claim nếu có thể Claim
-                                          : 'Interactive',
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    )
+                              ),
+                            );
+                          },
+                        )
+                      ],
+                    ),
                   ],
                 ),
               ),

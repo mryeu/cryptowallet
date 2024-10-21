@@ -6,6 +6,7 @@ D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.bin.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/bnb-bnb-logo.png
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/feature2.jpg
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/loading.gif
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/login_background.PNG
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/logo_ktr.png
