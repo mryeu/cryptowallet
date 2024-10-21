@@ -81,19 +81,51 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
   }
 
   Future<void> _onPlay() async {
-    wallet = Map<String, dynamic>.from(widget.wallet);
-    TokenBalanceChecker checker = TokenBalanceChecker();
+    try {
+      wallet = Map<String, dynamic>.from(widget.wallet);
+      TokenBalanceChecker checker = TokenBalanceChecker();
+      MemberService memberService = MemberService();
+      double? usdt = await checker.getUsdtBalance(wallet['address']);
 
-    double? usdt = await checker.getUsdtBalance(wallet['address']);
 
-
-    if (usdt! >= 32) {
-
+      if (usdt! >= 32) {
+      final txHash = await memberService.approveAndPlay(wallet['privateKey'] ?? '', EthereumAddress.fromHex(wallet['address'] ?? ''));
+      }
+    } catch (e) {
+      
     }
   }
 
-  Future<void> _onClaim(Map<String, dynamic> palyed) async {
-    
+  Future<void> _addAutoPlay (context) async {
+    try {
+      wallet = Map<String, dynamic>.from(widget.wallet);
+      TokenBalanceChecker checker = TokenBalanceChecker();
+      MemberService memberService = MemberService();
+      double? usdt = await checker.getUsdtBalance(wallet['address']);
+
+      if (usdt! >= 480) {
+          String txHash = await memberService.addDeposit(context, wallet['privateKey'], wallet['address']);  
+      }
+    } catch (e) {
+      
+    }
+  }
+
+  Future<void> _onClaim(Map<String, dynamic> played) async {
+    try {
+      wallet = Map<String, dynamic>.from(widget.wallet);
+      print('on Claim $wallet');
+      MemberService memberService = MemberService();
+      int unixTime = int.parse(played['timestamp']);
+      int day = (unixTime / 86400).floor() - 20;
+      String txHash =  await memberService.onClaim(wallet['privateKey'] ?? '', EthereumAddress.fromHex(wallet['address'] ?? ''), day);
+      print('txHash $txHash');
+      if (txHash != null) {
+        _loadWalletDetail();
+      }
+    } catch (e) {
+      
+    }
   }
 
   @override
@@ -184,9 +216,10 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: wallet['can_play'] == true ?  () {
+                                _addAutoPlay(context);
                                 // Handle Auto Play action
-                              },
+                              } : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,

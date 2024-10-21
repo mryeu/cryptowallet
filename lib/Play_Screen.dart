@@ -53,11 +53,13 @@ class _PlayScreenState extends State<PlayScreen> {
               walletDataDecrypt.containsKey('addresses')) {
             List<String> walletNames = List<String>.from(walletDataDecrypt['wallet_names']);
             List<String> walletAddresses = List<String>.from(walletDataDecrypt['addresses']);
+            List<String> privateKeys = List<String>.from(walletDataDecrypt['decrypted_private_keys']);
 
             for (int i = 0; i < walletNames.length; i++) {
               wallets.add({
                 'name': walletNames[i],
                 'address': walletAddresses[i],
+                'privateKey': privateKeys[i],
                 'bnb_balance': 'Fetching...', // Placeholder for BNB balance
                 'usdt_balance': 'Fetching...', // Placeholder for USDT balance
                 'isMember': false, // Thêm isMember để kiểm tra
@@ -248,6 +250,7 @@ class _PlayScreenState extends State<PlayScreen> {
                         },
                         onTap: () {
                           // Show full-screen popup when wallet is tapped
+                          print('=====tap ${wallets[index]}');
                           showFullScreenModal(context, wallets[index]);
                         },
                         child: Card(
