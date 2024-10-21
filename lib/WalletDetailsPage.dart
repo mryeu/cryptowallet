@@ -1,10 +1,100 @@
+import 'package:cryptowallet/check_balance.dart';
+import 'package:cryptowallet/mixins/check_time_claim_mixin.dart';
+import 'package:cryptowallet/services/filter_base.dart';
+import 'package:cryptowallet/services/member_service.dart';
+import 'package:cryptowallet/services/scan_transaction.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:web3dart/web3dart.dart';
 
-class WalletDetailsPage extends StatelessWidget {
+class WalletDetailsPage extends StatefulWidget {
   final Map<String, dynamic> wallet;
-
   const WalletDetailsPage({Key? key, required this.wallet}) : super(key: key);
+
+  @override
+  _WalletDetailsState createState () => _WalletDetailsState();
+}
+
+class _WalletDetailsState extends State<WalletDetailsPage> {
+  late Map<String, dynamic> wallet;
+  bool isLoading = false;
+  @override
+  void initState() {
+    super.initState();
+    _loadWalletDetail();
+  }
+
+  Future<void> _loadWalletDetail() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      wallet = Map<String, dynamic>.from(widget.wallet);
+      MemberService memberService = MemberService();
+      bool isMember = await memberService.checkIsMember(wallet['address']) ?? false;
+      wallet['can_play'] = false;
+      wallet['next_play_time'] = 'Fetching...';
+      wallet['sponsor'] = 'Fetching...';
+      wallet['total_ref'] = 'Fetching...';
+      wallet['total_ref'] = 'Fetching...';
+      wallet['referrer_link'] = isMember ?  'https://kittyrun.io/?ref=${wallet['address']}' : 'N/A';
+      wallet['can_play'] = false;
+      wallet['info'] = {
+        'totalVote': 0,
+        'totalClaim': 0
+      };
+      bool can_play = await checkPlay(wallet['address']) ?? false;
+      wallet['isMember'] = isMember;
+      Map<String, dynamic>? dataTree = await memberService.fetchTree(wallet['address']);
+      print('=====data ${dataTree} ${can_play}');
+      String sponsor = await memberService.getSponsor(wallet['address']);
+      String timePlay = await getTimePlay(wallet['address']);
+      Map<String, dynamic> info = await memberService.getUserInfo(wallet['address']);
+
+      print('=======mouhted: $mounted');
+      if (mounted) {
+        setState(() {
+          wallet['next_play_time'] = timePlay;
+          wallet['sponsor'] = isMember ? sponsor : 'Please join kittyrun or looking for referrer link!';
+          wallet['total_ref'] =  dataTree?['total'] ?? 0;
+          wallet['can_play'] = isMember ? can_play : false;
+          print("=====info $info");
+          wallet['info'] = info;
+          wallet['team'] = dataTree?['members'];
+        });
+      }
+
+      ScanTransaction transaction = ScanTransaction();
+      FilterEntity filter = FilterEntity(keyword: '', limit: 20, page: 1);
+      Map<String, dynamic>? dataPlay = await transaction.scanServer(wallet['address'], filter);
+
+      setState(() {
+        // wallet['played'] = dataPlay;
+        print('data $dataPlay');
+        wallet['histories'] = dataPlay?['data'];
+        isLoading = false;
+      });
+    } catch (e) {
+      print('=====error update state detail $e');
+      // Handle the error (e.g., print to console or show an error message)
+    }
+  }
+
+  Future<void> _onPlay() async {
+    wallet = Map<String, dynamic>.from(widget.wallet);
+    TokenBalanceChecker checker = TokenBalanceChecker();
+
+    double? usdt = await checker.getUsdtBalance(wallet['address']);
+
+
+    if (usdt! >= 32) {
+
+    }
+  }
+
+  Future<void> _onClaim(Map<String, dynamic> palyed) async {
+    
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,18 +117,18 @@ class WalletDetailsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Last Play: ${wallet['last_play_time'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
+                    Text('Status Play: ${ isLoading ? 'Fetching...' :  wallet['isMember'] ? ( wallet['can_play'] ? 'Play' : 'Played') : "Can't Play"}', style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 10),
-                    Text('Next Play: ${wallet['next_play_time'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
+                    Text('Next Play: ${ isLoading ? 'Fetching....' : wallet['next_play_time'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 10),
-                    Text('Sponsor: ${wallet['sponsor'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
+                    Text('Sponsor: ${isLoading ? 'Fetching....' : wallet['sponsor'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 10),
-                    Text('Total Ref: ${wallet['total_ref'] ?? 0}', style: const TextStyle(fontSize: 16)),
+                    Text('Total Ref: ${isLoading ? 'Fetcing...' : wallet['total_ref'] ?? 0}', style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
-                          child: Text('Referrer Link: ${wallet['referrer_link'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
+                          child: Text('Referrer Link: ${ isLoading ? 'Fetching...' : wallet['referrer_link'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
                         ),
                         IconButton(
                           icon: const Icon(Icons.copy),
@@ -63,10 +153,12 @@ class WalletDetailsPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: ElevatedButton(
-                              onPressed: () {
-                                // Handle Play/WaitPlay action
-                              },
-                              style: ElevatedButton.styleFrom(
+                                onPressed: !isLoading &&  wallet['can_play'] == true
+                                  ? () {
+                                      _onPlay();
+                                    }
+                                  : null, 
+                                style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
                                 shape: RoundedRectangleBorder(
@@ -130,38 +222,42 @@ class WalletDetailsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Team Management', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    
+                    Text('Played Management ${ isLoading ?  0 : (wallet['info']?['totalVote'] ?? 0)} / ${isLoading ? 0 : (wallet['info']?['totalClaim'] ?? 0)}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
-                      itemCount: (wallet['team'] ?? []).length,
+                      itemCount: (wallet['histories'] ?? []).length,
                       itemBuilder: (context, index) {
-                        var member = wallet['team'][index];
+                        var member = wallet['histories'][index];
+                        bool isClaim = checkClaim(int.parse(member['timestamp']));
+                        String timeClaim = formatTimeEnd(int.parse(member['timestamp']));
+                        print('=====> member $member ${wallet['histories']}');
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Index: ${member['index']}, Played: ${member['played']}, Commission: ${member['commission']}'),
+                              Text('Index: ${index + 1}, Played: ${member['statistic']}, TxID: ${member['TxID']}, Time claim: ${timeClaim}'),
                               const SizedBox(height: 5),
-                              Text('Time Countdown: ${member['countdown']}'),
+                              // Text('Time Countdown: ${member['countdown']}'),
                               const SizedBox(height: 5),
                               ElevatedButton(
-                                onPressed: () {
-                                  // Handle button action based on state
-                                },
+                                onPressed: isClaim ? () {
+                                  _onClaim(member);
+                                } : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: member['state'] == 'claimed'
+                                  backgroundColor: member['info'][1] == true
                                       ? Colors.grey
-                                      : member['state'] == 'active'
+                                      : isClaim  == true
                                       ? Colors.green
                                       : Colors.orange,
                                 ),
-                                child: Text(member['state'] == 'claimed'
+                                child: Text(member['info'][1] == true
                                     ? 'Claimed'
-                                    : member['state'] == 'active'
-                                    ? 'Active'
+                                    : isClaim
+                                    ? 'Claim'
                                     : 'Interactive'),
                               ),
                             ],
@@ -176,43 +272,43 @@ class WalletDetailsPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Card 3: My Members
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('My Members', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: (wallet['members'] ?? []).length,
-                      itemBuilder: (context, index) {
-                        var member = wallet['members'][index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  'Index: ${member['index']}, Address: ${member['address']}, Ref1: ${member['ref1']}, Ref2: ${member['ref2']}, Ref3: ${member['ref3']}'),
-                              const SizedBox(height: 5),
-                              Text('Total Play: ${member['total_play']}, Play Month: ${member['play_month']}'),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // // Card 3: My Members
+            // Card(
+            //   elevation: 4,
+            //   shape: RoundedRectangleBorder(
+            //     borderRadius: BorderRadius.circular(12.0),
+            //   ),
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16.0),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         const Text('My Members ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            //         const SizedBox(height: 10),
+            //         ListView.builder(
+            //           physics: const NeverScrollableScrollPhysics(),
+            //           shrinkWrap: true,
+            //           itemCount: (wallet['members'] ?? []).length,
+            //           itemBuilder: (context, index) {
+            //             var member = wallet['members'][index];
+            //             return Padding(
+            //               padding: const EdgeInsets.symmetric(vertical: 8.0),
+            //               child: Column(
+            //                 crossAxisAlignment: CrossAxisAlignment.start,
+            //                 children: [
+            //                   Text(
+            //                       'Index: ${member['index']}, Address: ${member['address']}, Ref1: ${member['ref1']}, Ref2: ${member['ref2']}, Ref3: ${member['ref3']}'),
+            //                   const SizedBox(height: 5),
+            //                   Text('Total Play: ${member['total_play']}, Play Month: ${member['play_month']}'),
+            //                 ],
+            //               ),
+            //             );
+            //           },
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

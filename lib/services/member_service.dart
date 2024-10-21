@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'dart:async';
 import 'package:web3dart/web3dart.dart';
-import 'package:http/http.dart';
 import 'dart:math';
+import 'package:http/http.dart' as http;
 
 import '../swap_ktr_usdt.dart';
 import '../wallet_create.dart'; // Import for using the pow function
@@ -24,6 +26,8 @@ class MemberService {
   final EthereumAddress contractClaimAddress = EthereumAddress.fromHex(
       '0xCe0FE6d980914292804AdbEC0f55392712953b74');
 
+  final String kittyRunApiUrl = 'https://kittyrun.io/api/';
+  
   late Web3Client web3;
 
   MemberService() {
@@ -133,7 +137,7 @@ class MemberService {
     }
   }
 
-// Function to handle the call to addAccessPlay
+  // Function to handle the call to addAccessPlay
   Future<String> addDeposit(BuildContext context, String privateKey,
       EthereumAddress accountAddress) async {
     // ABI for the addAccessPlay function
@@ -673,7 +677,64 @@ class MemberService {
   }
 
 
-// Hàm hỗ trợ ký và gửi giao dịch để giảm lặp lại
+
+  Future<String> getSponsor(String? walletAddress) async {
+    if (walletAddress == null) {
+      return 'No wallet address provided';
+    }
+
+    const abi = '''
+    [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "childAddress",
+            "type": "address"
+          }
+        ],
+        "name": "sponsor",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ]
+    ''';
+
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(abi, 'Member'),
+        contractMemberAddress,
+      );
+
+      // Create a function object to call
+      final sponsorFunction = contract.function('sponsor');
+
+      // Call the contract to get the sponsor address
+      final result = await web3.call(
+        contract: contract,
+        function: sponsorFunction,
+        params: [EthereumAddress.fromHex(walletAddress)],
+      );
+
+      if (result.isNotEmpty) {
+        final sponsorAddress = result.first as EthereumAddress;
+        return sponsorAddress.hex;
+      } else {
+        return 'Sponsor not found';
+      }
+    } catch (e) {
+      return 'Error: ${e.toString()}';
+    }
+  }
+  
+  // Hàm hỗ trợ ký và gửi giao dịch để giảm lặp lại
   Future<String> _signAndSendTransaction(EthPrivateKey credentials,
       Transaction transaction) async {
     final signedTransaction = await web3.signTransaction(
@@ -746,18 +807,36 @@ class MemberService {
       throw Exception('Failed to get vote');
     }
   }
-}
 
+  Future<Map<String, dynamic>?> fetchTree(String? walletAddress) async {
+    try {
+        // Build the API URL with query parameters
+        final Uri url = Uri.parse('${kittyRunApiUrl}tree-members/$walletAddress/?include_family_tree=true&include_total_votes=true&include_lasted_vote=true&include_total_rank_play=true&show=15&page=1');
+        print('========url $url');
+        final http.Response response = await http.get(url);
 
-
-  void showTopToast(String message, bool success) {
-  try {
-
-  } catch(e) {
-    print('error toast $e');
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          return data; // Return the parsed data
+        } else {
+          print('Failed to fetch data. Status code: ${response.statusCode}');
+          return null;
+        }
+      } catch (e) {
+        print('Error fetching data from server: $e');
+        return null;
+      }
+    }
   }
 
-}
+    void showTopToast(String message, bool success) {
+    try {
+
+    } catch(e) {
+      print('error toast $e');
+    }
+
+  }
 
 void showTopRightSnackBar(BuildContext context, String message, bool success) {
   OverlayEntry? overlayEntry; // Declare as nullable

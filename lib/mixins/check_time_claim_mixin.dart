@@ -22,6 +22,21 @@ bool checkClaim(int? timestamp) {
   return duration.inSeconds <= 0;
 }
 
+String formatTimeEnd(int timestamp) {
+  if (timestamp == null) return '';
+
+  // Parse the timestamp and convert it to DateTime
+  final timeEnd = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)
+      .toUtc()
+      .subtract(Duration(hours: DateTime.now().timeZoneOffset.inHours)) // Ensure consistent UTC start of the day
+      .add(Duration(days: 30));
+
+  // Convert timeEnd to "MM/DD/YYYY" format
+  String formattedTimeEnd = DateFormat('MM/dd/yyyy').format(timeEnd);
+
+  return formattedTimeEnd;
+}
+
 Future<bool> checkPlay(String? walletAddress) async {
   int unixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   int unixNow = (unixTime / 86400).floor() - 20;
@@ -33,4 +48,18 @@ Future<bool> checkPlay(String? walletAddress) async {
   final int percent_last_day = info_last_day['percent'] ?? 0;
   
   return percent_now == 0 && percent_last_day == 0;
+}
+
+Future<String> getTimePlay(String? walletAddress) async {
+  bool check = await checkPlay(walletAddress);
+  
+  DateTime date = DateTime.now();
+
+  if (!check) {
+    date = date.add(const Duration(days: 1));
+  }
+
+  // Formatting the date as MM/DD/YYYY
+  String formattedDate = DateFormat('MM/dd/yyyy').format(date);
+  return formattedDate;
 }
