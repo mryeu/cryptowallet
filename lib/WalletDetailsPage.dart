@@ -203,6 +203,18 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
         );
     }
   }
+  String _shortenReferrerLink(String? link) {
+    if (link == null || link.length < 10) {
+      return link ?? 'N/A';
+    }
+    return '${link.substring(0, 10)}...';
+  }
+  String _shortenAddress(String? address) {
+    if (address == null || address.length < 10) {
+      return address ?? 'N/A';
+    }
+    return '${address.substring(0, 5)}...${address.substring(address.length - 5)}';
+  }
 
   Future<void> _copyToClipboard(String? text) async {
     if (text != null && text.isNotEmpty) {
@@ -217,8 +229,13 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wallet Details'),
+        title: const Text(
+          'Wallet Details',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.green,
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -229,101 +246,121 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Status Play: ${ isLoading ? 'Fetching...' :  wallet['isMember'] ? ( wallet['can_play'] ? 'Play' : 'Played') : "Can't Play"}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 10),
-                    Text('Next Play: ${ isLoading ? 'Fetching....' : wallet['next_play_time'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 10),
-                    Text('Sponsor: ${isLoading ? 'Fetching....' : wallet['sponsor'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 10),
-                    Text('Total Ref: ${isLoading ? 'Fetcing...' : wallet['total_ref'] ?? 0}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text('Referrer Link: ${ isLoading ? 'Fetching...' : wallet['referrer_link'] ?? 'N/A'}', style: const TextStyle(fontSize: 16)),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.copy),
-                          onPressed: wallet['is_member'] == true ?  () {
-                            // Copy referrer link to clipboard
-                            _copyToClipboard(wallet['referrer_link']);
-                          } : null,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Button 1: Play/WaitPlay
-                        Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF56AB2F),Color(0xFFA8E063) ], // Light green to dark green gradient
-                              ),
-                              borderRadius: BorderRadius.circular(5),
+              // Sử dụng Stack để chèn gradient background cho Card
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green[600]!, Colors.green[200]!],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.all(Radius.circular(12.0)), // Bo góc cho toàn bộ container
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Hiển thị trạng thái chơi
+                      Text(
+                        'Status Play: ${isLoading ? 'Fetching...' : wallet['isMember'] ? (wallet['can_play'] ? 'Play' : 'Played') : "Can't Play"}',
+                        style: const TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Hiển thị thời gian chơi tiếp theo
+                      Text(
+                        'Next Play: ${isLoading ? 'Fetching...' : wallet['next_play_time'] ?? 'N/A'}',
+                        style: const TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Hiển thị sponsor với địa chỉ rút gọn
+                      Text(
+                        'Sponsor: ${isLoading ? 'Fetching...' : _shortenAddress(wallet['sponsor']) ?? 'N/A'}',
+                        style: const TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Hiển thị số lượng total ref
+                      Text(
+                        'Total Ref: ${isLoading ? 'Fetching...' : wallet['total_ref'] ?? 0}',
+                        style: const TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Hiển thị link rút gọn
+                      Row(
+                        children: [
+                          Expanded(
+                            // Rút gọn referrer link 10 ký tự đầu tiên
+                            child: Text(
+                              'Referrer Link: ${isLoading ? 'Fetching...' : _shortenReferrerLink(wallet['referrer_link']) ?? 'N/A'}',
+                              style: const TextStyle(fontSize: 16, color: Colors.white),
                             ),
-                            child: ElevatedButton(
-                                onPressed: !isLoading &&  wallet['can_play'] == true
-                                  ? () {
-                                      _onPlay();
-                                    }
-                                  : null, 
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.copy, color: Colors.white),
+                            onPressed: wallet['is_member'] == true
+                                ? () {
+                              _copyToClipboard(wallet['referrer_link']);
+                            }
+                                : null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Nút Play và Auto Play
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Button 1: Play/WaitPlay
+                          Expanded(
+                            child: Container(
+                              child: ElevatedButton(
+                                onPressed: !isLoading && wallet['can_play'] == true
+                                    ? () {
+                                  _onPlay();
+                                }
+                                    : null,
                                 style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5),
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.green,
                                 ),
-                              ),
-                              child: Text(
-                                wallet['is_playing'] == true ? 'WaitPlay' : 'Play',
-                                style: const TextStyle(color: Colors.white),
+                                child: Text(
+                                  wallet['is_playing'] == true ? 'WaitPlay' : 'Play',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          SizedBox(width: 10,),
+                          // Button 2: Auto Play
+                          Expanded(
+                            child: Container(
+                              child: ElevatedButton(
+                                onPressed: wallet['can_play'] == true
+                                    ? () {
+                                  _addAutoPlay(context);
+                                }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.green,
 
-                        // Button 2: Auto Play
-                        Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFA8E063), Color(0xFF56AB2F)], // Light green to dark green gradient
-                              ),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: ElevatedButton(
-                              onPressed: wallet['can_play'] == true ?  () {
-                                _addAutoPlay(context);
-                                // Handle Auto Play action
-                              } : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5),
                                 ),
-                              ),
-                              child: const Text(
-                                'Auto Play',
-                                style: TextStyle(color: Colors.white),
+                                child: const Text(
+                                  'Auto Play',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -352,40 +389,72 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                         var member = wallet['histories'][index];
                         bool isClaim = checkClaim(int.parse(member['timestamp']));
                         String timeClaim = formatTimeEnd(int.parse(member['timestamp']));
-                        print('=====> member $member ${wallet['histories']}');
+                        String shortTxID = member['TxID'].substring(0, 5);  // Rút gọn TxID còn 5 ký tự
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Index: ${index + 1}, Played: ${member['info'][1] == true ? 'Claimed' : 'Played'}, TxID: ${member['TxID']}'),
-                              const SizedBox(height: 5),
-                              Text('Amount: ${31 + ((31 * member['info'][0]) / 100000)} USDT'),
-                              const SizedBox(height: 5),
-                              Text('Time claim: ${timeClaim}'),
-                              const SizedBox(height: 5),
-                              ElevatedButton(
-                                onPressed: isClaim ? () {
-                                  _onClaim(member);
-                                } : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: member['info'][1] == true
-                                      ? Colors.grey
-                                      : isClaim  == true
-                                      ? Colors.green
-                                      : Colors.orange,
-                                ),
-                                child: Text(member['info'][1] == true
-                                    ? 'Claimed'
-                                    : isClaim
-                                    ? 'Claim'
-                                    : 'Interactive'),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: member['info'][1] == true || !isClaim ? Colors.green : Colors.red, // Xanh nếu đã claim, đỏ nếu interactive
+                                width: 2.0,
                               ),
-                            ],
+                              borderRadius: BorderRadius.circular(8), // Bo góc cho đường viền
+                            ),
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                // Cột 1: Hiển thị index (#)
+                                Expanded(
+                                  flex: 1,  // Chiếm 1 phần
+                                  child: Text(
+                                    '#${index + 1}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                // Cột 2: Chứa thông tin Played, TxID, và Time Claim
+                                Expanded(
+                                  flex: 5,  // Chiếm 3 phần
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Played: ${member['info'][1] == true ? 'Claimed' : 'Played'}'),
+                                      Text('TxID: $shortTxID'),  // Rút gọn TxID chỉ còn 5 ký tự
+                                      Text('Time claim: $timeClaim'),
+                                    ],
+                                  ),
+                                ),
+                                // Cột 3: Nút Action (Claim hoặc Claimed)
+                                Expanded(
+                                  flex: 3,  // Chiếm 1 phần
+                                  child: ElevatedButton(
+                                    onPressed: isClaim
+                                        ? () {
+                                      _onClaim(member);
+                                    }
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: member['info'][1] == true
+                                          ? Colors.orange // Màu cam khi đã Claimed
+                                          : isClaim == true
+                                          ? Colors.green // Màu xanh khi có thể Claim
+                                          : Colors.grey, // Màu xám khi không thể Claim
+                                    ),
+                                    child: Text(
+                                      member['info'][1] == true
+                                          ? 'Claimed' // Hiển thị Claimed khi đã Claim
+                                          : isClaim
+                                          ? 'Claim' // Hiển thị Claim nếu có thể Claim
+                                          : 'Interactive',  style:  TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
-                    ),
+                    )
                   ],
                 ),
               ),
