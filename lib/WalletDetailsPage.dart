@@ -6,6 +6,7 @@ import 'package:cryptowallet/services/scan_transaction.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:flutter/services.dart';
 
 class WalletDetailsPage extends StatefulWidget {
   final Map<String, dynamic> wallet;
@@ -37,6 +38,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
       wallet['sponsor'] = 'Fetching...';
       wallet['total_ref'] = 'Fetching...';
       wallet['total_ref'] = 'Fetching...';
+      wallet['is_member'] = isMember;
       wallet['referrer_link'] = isMember ?  'https://kittyrun.io/?ref=${wallet['address']}' : 'N/A';
       wallet['can_play'] = false;
       wallet['info'] = {
@@ -128,6 +130,15 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
     }
   }
 
+  Future<void> _copyToClipboard(String? text) async {
+    if (text != null && text.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: text));
+      print('Referrer link copied to clipboard: $text'); // Debug message
+    } else {
+      print('No referrer link to copy'); // Debug message
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,9 +175,10 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.copy),
-                          onPressed: () {
+                          onPressed: wallet['is_member'] == true ?  () {
                             // Copy referrer link to clipboard
-                          },
+                            _copyToClipboard(wallet['referrer_link']);
+                          } : null,
                         ),
                       ],
                     ),
