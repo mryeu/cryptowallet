@@ -51,6 +51,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
       print('=====data ${dataTree} ${can_play}');
       String sponsor = await memberService.getSponsor(wallet['address']);
       String timePlay = await getTimePlay(wallet['address']);
+      Map<String, int> depositPlay = await memberService.getPlayBalance(wallet['address']);
       Map<String, dynamic> info = await memberService.getUserInfo(wallet['address']);
 
       print('=======mouhted: $mounted');
@@ -63,6 +64,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
           print("=====info $info");
           wallet['info'] = info;
           wallet['team'] = dataTree?['members'];
+          wallet['deposit'] = depositPlay;
         });
       }
 
@@ -174,35 +176,68 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
     }
   }
 
-  Future<void> _onClaim(Map<String, dynamic> played) async {
+  Future<void> _onClaim(Map<String, dynamic> played, List<Map<String, dynamic>> histories) async {
     try {
-      wallet = Map<String, dynamic>.from(widget.wallet);
+      Map<String, dynamic> wallet = Map<String, dynamic>.from(widget.wallet);
       print('on Claim $wallet');
       MemberService memberService = MemberService();
       int unixTime = int.parse(played['timestamp']);
       int day = (unixTime / 86400).floor() - 20;
-      String txHash =  await memberService.onClaim(wallet['privateKey'] ?? '', EthereumAddress.fromHex(wallet['address'] ?? ''), day);
-      print('txHash $txHash');
-      if (txHash != null) {
+      String txHash = await memberService.onClaim(
+        wallet['privateKey'] ?? '', 
+        EthereumAddress.fromHex(wallet['address'] ?? ''), 
+        day,
+      );
+      if (txHash.isNotEmpty) {
+        // Display success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Claim success $txHash',
-            ),
+            content: Text('Claim success $txHash'),
             backgroundColor: Colors.green,
           ),
         );
-        _loadWalletDetail();
+        List<Map<String, dynamic>> dataUpdate = [];
+
+        for (var member in histories) {
+          int timestamp = int.parse(member['timestamp']);
+          bool isClaim = checkClaim(timestamp);
+
+          if (isClaim) {
+            int day = (timestamp / 86400).floor() - 20;
+            Map<String, dynamic> infoUpdate = await memberService.getVote(member['address'] ?? '', day);
+            print('======info new $infoUpdate');
+            if(played['timestamp'] == member['timestamp']) {
+              member['info'] = [infoUpdate['percent'], true]; 
+            } else {
+              member['info'] = [infoUpdate['percent'], infoUpdate['claimed']]; 
+            }
+          }
+          dataUpdate.add(member);
+        }
+        wallet['histories'] = dataUpdate;
+
+        print('==========update new $dataUpdate');
+        setState(() {
+          wallet = wallet;
+        });
+
+        // setState(() {
+        //   print('==========update new $dataUpdate');
+        //   wallet['histories'] = dataUpdate;
+        // });
       }
     } catch (e) {
+      // Display error message
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Claim error $e',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        SnackBar(
+          content: Text('Claim error $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+
+
   String _shortenReferrerLink(String? link) {
     if (link == null || link.length < 10) {
       return link ?? 'N/A';
@@ -219,6 +254,13 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
   Future<void> _copyToClipboard(String? text) async {
     if (text != null && text.isNotEmpty) {
       Clipboard.setData(ClipboardData(text: text));
+       ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copied',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
       print('Referrer link copied to clipboard: $text'); // Debug message
     } else {
       print('No referrer link to copy'); // Debug message
@@ -278,6 +320,12 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                       // Hiển thị sponsor với địa chỉ rút gọn
                       Text(
                         'Sponsor: ${isLoading ? 'Fetching...' : _shortenAddress(wallet['sponsor']) ?? 'N/A'}',
+                        style: const TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      // Hiển thị ký gửi
+                      Text(
+                        'Deposit Auto: ${isLoading ? 'Fetching...' : (wallet['deposit']['amount'])} USDT',
                         style: const TextStyle(fontSize: 16, color: Colors.white),
                       ),
                       const SizedBox(height: 10),
@@ -430,7 +478,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                   child: ElevatedButton(
                                     onPressed: member['info'][1] == true ? null : isClaim
                                         ? () {
-                                      _onClaim(member);
+                                      _onClaim(member, wallet['histories']);
                                     }
                                         : null,  // Disable button if already Claimed
                                     style: ElevatedButton.styleFrom(
