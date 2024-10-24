@@ -1,7 +1,7 @@
-import 'package:cryptowallet/wallet_choice_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'wallet_selector_screen.dart'; // Ensure correct import for navigation
+import 'package:cryptowallet/wallet_choice_screen.dart';
+import 'package:cryptowallet/services/localization_service.dart'; // Import localization service
 
 class TermsScreen extends StatefulWidget {
   const TermsScreen({Key? key}) : super(key: key);
@@ -12,6 +12,49 @@ class TermsScreen extends StatefulWidget {
 
 class _TermsScreenState extends State<TermsScreen> {
   bool _isChecked = false;
+  String _termsTitle = '';
+  String _termsContent = '';
+  String _agreeText = '';
+  String _acceptButtonText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalization(); // Load ngôn ngữ khi initState
+  }
+  Future<void> _loadLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+    setState(() {
+      _termsTitle = LocalizationService.translate('terms_screen.title');
+      _termsContent = LocalizationService.translate('terms_screen.terms_content');
+      _agreeText = LocalizationService.translate('terms_screen.agree_to_terms');
+      _acceptButtonText = LocalizationService.translate('terms_screen.accept_button');
+    });
+  }
+
+
 
   Future<void> _acceptTerms() async {
     final prefs = await SharedPreferences.getInstance();
@@ -22,7 +65,7 @@ class _TermsScreenState extends State<TermsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Terms of Use"),
+        title: Text(_termsTitle), // Sử dụng tiêu đề đã dịch
         centerTitle: true,
       ),
       body: Container(
@@ -40,19 +83,11 @@ class _TermsScreenState extends State<TermsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
+            Expanded(
               child: SingleChildScrollView(
                 child: Text(
-                  "KittyRun Wallet - Terms and Conditions\n\n"
-                      "1. **Decentralized Nature**: KittyRun Wallet is a non-custodial wallet. This means that you, the user, are fully responsible for managing your private keys and recovery phrases. We do not store, control, or have access to your private keys or funds.\n\n"
-                      "2. **Privacy**: As a decentralized wallet, KittyRun Wallet does not collect or store any personal information or transaction data. All your data is stored locally on your device and is never transmitted to our servers.\n\n"
-                      "3. **Self-Custody**: You are the sole owner of your assets. If you lose your private keys or recovery phrase, you will not be able to access your funds. It is your responsibility to securely store and back up your recovery phrase and private keys.\n\n"
-                      "4. **Transaction Responsibility**: All transactions initiated through KittyRun Wallet are irreversible and cannot be undone. You are fully responsible for verifying the details of your transactions before confirming them.\n\n"
-                      "5. **Security**: KittyRun Wallet employs industry-standard encryption to protect your data on your device. However, the security of your wallet also depends on the security of your device. You are responsible for safeguarding your device against unauthorized access, malware, and other security threats.\n\n"
-                      "6. **Updates**: We may release updates to improve security, fix bugs, or add new features. It is recommended that you keep the app updated to the latest version to ensure optimal performance and security.\n\n"
-                      "7. **No Liability**: KittyRun Wallet and its developers shall not be liable for any loss, damage, or expense arising from the use or inability to use the wallet, including but not limited to the loss of funds, data breaches, or unauthorized access to your device.\n\n"
-                      "8. **Acceptance of Terms**: By using KittyRun Wallet, you acknowledge that you have read, understood, and agreed to these terms. If you do not agree to any of these terms, you should discontinue the use of the wallet immediately.",
-                  style: TextStyle(
+                  _termsContent, // Sử dụng nội dung đã dịch
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Colors.white,
                   ),
@@ -70,9 +105,9 @@ class _TermsScreenState extends State<TermsScreen> {
                     });
                   },
                 ),
-                const Text(
-                  "I agree to the terms of use",
-                  style: TextStyle(color: Colors.white),
+                Text(
+                  _agreeText, // Sử dụng văn bản "I agree" đã dịch
+                  style: const TextStyle(color: Colors.white),
                 ),
               ],
             ),
@@ -87,8 +122,6 @@ class _TermsScreenState extends State<TermsScreen> {
                 onPressed: _isChecked
                     ? () async {
                   await _acceptTerms(); // Đợi quá trình lưu trữ hoàn tất
-
-                  // Điều hướng tới màn hình lựa chọn Create hoặc Import
                   if (mounted) {
                     Navigator.pushReplacement(
                       context,
@@ -99,7 +132,7 @@ class _TermsScreenState extends State<TermsScreen> {
                   }
                 }
                     : null,
-                child: const Text("Accept"),
+                child: Text(_acceptButtonText), // Sử dụng văn bản "Accept" đã dịch
               ),
             ),
           ],

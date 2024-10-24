@@ -4,12 +4,17 @@ D:/cryptowallet/build/windows/x64/runner/Debug/bitsdojo_window_windows_plugin.li
 D:/cryptowallet/build/windows/x64/runner/Debug/url_launcher_windows_plugin.dll
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.bin
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/AssetManifest.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/document_data.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/fonts/NotoSans-Bold.ttf
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/fonts/NotoSans-Regular.ttf
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/bnb-bnb-logo.png
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/loading.gif
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/login_background.PNG
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/logo_ktr.png
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/sort.svg
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/usdt_logo.png
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/en.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/zh.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/FontManifest.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/fonts/MaterialIcons-Regular.otf
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/kernel_blob.bin

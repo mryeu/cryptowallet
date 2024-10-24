@@ -108,6 +108,9 @@ flutter:
     - assets/images/sort.svg
     - assets/images/login_background.PNG
     - assets/images/loading.gif
+    - assets/document_data.json
+    - assets/translations/en.json
+    - assets/translations/zh.json
 
 
 

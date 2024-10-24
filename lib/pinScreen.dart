@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cryptowallet/services/localization_service.dart';
 import 'package:cryptowallet/services/session_manager.dart';
 import 'package:cryptowallet/terms_screen.dart';
 import 'package:cryptowallet/wallet_create.dart';
@@ -23,19 +24,55 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
   bool _isConfirming = false;
   bool _walletExists = false;
   String _message = "Enter Your PIN";
+  String _selectedFlag = 'us';
+
 
   @override
   void initState() {
     super.initState();
+    _loadLocalization();
+    print(_loadLocalization);
+
     _checkWalletExistence();
   }
 
-  // Hàm kiểm tra ví đã tồn tại chưa
+  Future<void> _loadLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+
+    setState(() {
+      // Cập nhật tin nhắn dựa trên ngôn ngữ
+      _message = LocalizationService.translate('setup_pin_screen.enter_your_pin');
+      _selectedFlag = selectedFlag;
+    });
+  }
+
   Future<void> _checkWalletExistence() async {
 
     if (widget.mnemonic != null) {
       setState(() {
-        _message = "Enter Your PIN to Restore Wallet";  // Nếu có mnemonic, yêu cầu nhập PIN để khôi phục
+        _message = LocalizationService.translate('setup_pin_screen.enter_your_pin_restore');
         _walletExists = false; // Đảm bảo rằng nó không kiểm tra ví cũ
       });
       return;
@@ -47,18 +84,16 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
     if (walletCreated) {
       setState(() {
         _walletExists = true;
-        _message = "Enter Your PIN to Unlock Wallet";
+        _message = LocalizationService.translate('setup_pin_screen.enter_your_pin_unlock');
       });
     } else {
       // Nếu cờ chưa được tạo, kiểm tra tệp ví (nếu cần)
       bool exists = await _walletExistsInStorage();
       setState(() {
         _walletExists = exists;
-        if (exists) {
-          _message = "Enter Your PIN to Unlock Wallet";
-        } else {
-          _message = "Enter Your PIN to Create New Wallet";  // Nếu không có gì, yêu cầu tạo ví mới
-        }
+        _message = exists
+            ? LocalizationService.translate('setup_pin_screen.enter_your_pin_unlock')
+            : LocalizationService.translate('setup_pin_screen.enter_your_pin_create');
       });
     }
   }
@@ -97,7 +132,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
             _firstPin = _enteredPin;
             _enteredPin = "";
             _isConfirming = true;
-            _message = "Re-enter Your PIN";
+            _message = LocalizationService.translate('setup_pin_screen.reenter_your_pin');
           }
         }
       }
@@ -115,14 +150,14 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
         _importWalletWithPin(_enteredPin);
       }
     } else {
-      _resetPinEntry("PINs did not match. Please try again.");
+      _resetPinEntry(LocalizationService.translate('setup_pin_screen.pin_mismatch'));
     }
   }
 
   // Mở khóa ví đã tồn tại bằng PIN (chỉ nhập 1 lần PIN)
   Future<void> _unlockWalletWithPin(String pin) async {
     try {
-      _showLoadingDialog("Unlocking wallet...");
+      _showLoadingDialog(LocalizationService.translate('setup_pin_screen.unlocking_wallet'));
       SessionManager.userPin = pin;
       final walletData = await loadWalletPINFromJson(pin); // Giải mã ví bằng PIN
       _hideLoadingDialog();
@@ -133,18 +168,18 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
           MaterialPageRoute(builder: (context) => const WalletScreen()), // Chuyển tới màn hình chính
         );
       } else {
-        _resetPinEntry("Invalid PIN. Please try again.");
+        _resetPinEntry(LocalizationService.translate('setup_pin_screen.failed_to_unlock'));
       }
     } catch (e) {
       _hideLoadingDialog();
-      _resetPinEntry("Failed to unlock wallet. Try again.");
+      _resetPinEntry(LocalizationService.translate('setup_pin_screen.failed_to_unlock'));
     }
   }
 
   // Tạo ví mới với PIN
   Future<void> _createWalletWithPin(String pin) async {
     try {
-      _showLoadingDialog("Creating wallet, please wait...");
+      _showLoadingDialog(LocalizationService.translate('setup_pin_screen.creating_wallet'));
 
       SessionManager.userPin = pin;
       Map<String, dynamic> walletData = await generateWallet(pin);
@@ -160,32 +195,36 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
           MaterialPageRoute(builder: (context) => const WalletScreen()),
         );
       } else {
-        _resetPinEntry("Failed to create wallet. Try again.");
+        _resetPinEntry(LocalizationService.translate('setup_pin_screen.failed_to_create'));
       }
     } catch (e) {
       _hideLoadingDialog();
-      _resetPinEntry("Failed to create wallet. Try again.");
+      _resetPinEntry(LocalizationService.translate('setup_pin_screen.failed_to_create'));
     }
   }
 
   // Khôi phục ví từ mnemonic
   Future<void> _importWalletWithPin(String pin) async {
     try {
-      _showLoadingDialog("Restoring wallet, please wait...");
+      // Hiển thị thông báo khôi phục ví từ JSON
+      _showLoadingDialog(LocalizationService.translate('setup_pin_screen.restoring_wallet'));
 
       SessionManager.userPin = pin;
       await importWalletFromSeed(widget.mnemonic!, pin);
       _hideLoadingDialog();
 
+      // Sau khi khôi phục thành công, chuyển đến màn hình ví
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const WalletScreen()),
       );
     } catch (e) {
       _hideLoadingDialog();
-      _resetPinEntry("Failed to restore wallet. Try again.");
+      // Thông báo lỗi từ JSON khi không thể khôi phục ví
+      _resetPinEntry(LocalizationService.translate('setup_pin_screen.failed_to_restore'));
     }
   }
+
 
   // Reset quá trình nhập PIN khi có lỗi
   void _resetPinEntry(String message) {

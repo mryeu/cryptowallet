@@ -1,60 +1,80 @@
+import 'dart:convert'; // Để giải mã JSON
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class DocumentScreen extends StatelessWidget {
+class DocumentScreen extends StatefulWidget {
   const DocumentScreen({super.key});
+
+  @override
+  _DocumentScreenState createState() => _DocumentScreenState();
+}
+
+class _DocumentScreenState extends State<DocumentScreen> {
+  List<dynamic> documentData = [];
+  String languageCode = 'en'; // Mặc định ngôn ngữ là tiếng Anh
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguagePreference();
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      languageCode = prefs.getString('selectedLanguage') ?? 'en';  // Lấy mã ngôn ngữ từ SharedPreferences
+    });
+    _loadJsonData();  // Gọi hàm đọc dữ liệu JSON sau khi có mã ngôn ngữ
+  }
+
+  Future<void> _loadJsonData() async {
+    try {
+
+      final String response = await rootBundle.loadString('assets/document_data.json');
+      final data = json.decode(response);
+       var languageData = data[languageCode] ?? data['en'];
+      if (languageData is List) {
+        setState(() {
+          documentData = languageData;
+        });
+      } else {
+        print('Error: Expected a list but got ${languageData?.runtimeType}.');
+      }
+    } catch (e) {
+      print('Error loading JSON data: $e');
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-         return false;
+        return false; // Ngăn việc quay lại trang trước
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Document'),
         ),
-        body: ListView(
+        body: documentData.isNotEmpty
+            ? ListView.builder(
           padding: const EdgeInsets.all(8.0),
-          children: <Widget>[
-            _buildTreeItem(
-              title: 'Section 1: How to Play KittyRun',
-              content: 'Detailed instructions for playing KittyRun go here.',
-            ),
-            _buildTreeItem(
-              title: 'Section 2: How to Claim',
-              content: 'Instructions for claiming rewards or tokens.',
-            ),
-            _buildTreeItem(
-              title: 'Section 3: How to Swap',
-              content: 'Information on how to swap tokens or assets.',
-            ),
-            _buildTreeItem(
-              title: 'Section 4: How to Invite',
-              content: 'Details on inviting other users or friends.',
-            ),
-            _buildTreeItem(
-              title: 'Section 5: How to Get Reward',
-              content: 'Explanation on how users can earn rewards.',
-            ),
-            _buildTreeItem(
-              title: 'Section 6: Star System',
-              content: 'Details on the star system and its uses.',
-            ),
-            _buildTreeItem(
-              title: 'Section 7: Play Game',
-              content: 'General instructions for playing the game.',
-            ),
-            _buildTreeItem(
-              title: 'Section 8: Claim Game',
-              content: 'Instructions on how to claim rewards after a game.',
-            ),
-          ],
-        ),
+          itemCount: documentData.length,
+          itemBuilder: (context, index) {
+            return _buildTreeItem(
+              title: documentData[index]['title'],
+              content: documentData[index]['content'],
+            );
+          },
+        )
+            : const Center(child: CircularProgressIndicator()), // Hiển thị vòng tròn tải khi đang load dữ liệu
       ),
     );
   }
 
-  // Helper method to build an ExpansionTile for each tree item
+  // Hàm xây dựng mỗi mục ExpansionTile
   Widget _buildTreeItem({required String title, required String content}) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
