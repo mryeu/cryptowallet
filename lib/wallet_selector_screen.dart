@@ -4,30 +4,75 @@ import 'package:cryptowallet/terms_screen.dart';
 import 'package:cryptowallet/wallet_create.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptowallet/services/localization_service.dart'; // Giả sử có dịch vụ này để xử lý đa ngôn ngữ
 import 'main.dart';
 
-class WalletSelectorScreen extends StatelessWidget {
+class WalletSelectorScreen extends StatefulWidget {
   const WalletSelectorScreen({Key? key}) : super(key: key);
 
-  Future<bool> checkIfAcceptedTerms() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('acceptedTerms') ?? false;
+  @override
+  _WalletSelectorScreenState createState() => _WalletSelectorScreenState();
+}
+
+class _WalletSelectorScreenState extends State<WalletSelectorScreen> {
+  // Các chuỗi văn bản được dịch
+  String _createWalletText = '';
+  String _importMnemonicText = '';
+  String _removeWalletText = '';
+  String _welcomeToText = '';
+  String _appTitleText = '';
+  String _selectionText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalization();
+  }
+
+  Future<void> _loadLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+
+    setState(() {
+      _createWalletText = LocalizationService.translate('wallet_selector_screen.create_wallet');
+      _importMnemonicText = LocalizationService.translate('wallet_selector_screen.import_mnemonic');
+      _removeWalletText = LocalizationService.translate('wallet_selector_screen.remove_wallet');
+      _welcomeToText = LocalizationService.translate('wallet_selector_screen.welcome_to');
+      _appTitleText = LocalizationService.translate('wallet_selector_screen.app_title');
+      _selectionText = LocalizationService.translate('wallet_selector_screen.selection_text');
+    });
   }
 
   Future<void> _removeWallet(BuildContext context) async {
     try {
-      // Xóa dữ liệu ví từ SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear(); // Xóa tất cả dữ liệu lưu trữ trong SharedPreferences
-
-      // Bạn có thể thêm logic khác để xóa ví từ hệ thống lưu trữ của bạn nếu cần
-
-      // Điều hướng người dùng quay lại màn hình chính hoặc màn hình tạo ví
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const SetupPinScreen()), // Navigate back to PIN setup or initial screen
+        MaterialPageRoute(builder: (context) => const SetupPinScreen()),
       );
-
       print("Đã xóa ví thành công");
     } catch (e) {
       print("Lỗi khi xóa ví: $e");
@@ -36,9 +81,7 @@ class WalletSelectorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check if PIN is null
     if (SessionManager.userPin == null) {
-      // If PIN is null, redirect to SetupPinScreen
       Future.microtask(() {
         Navigator.pushReplacement(
           context,
@@ -52,8 +95,8 @@ class WalletSelectorScreen extends StatelessWidget {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF66BB6A), // Light green
-              Color(0xFF004D40), // Dark green
+              Color(0xFF66BB6A), // Xanh nhạt
+              Color(0xFF004D40), // Xanh đậm
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -66,31 +109,30 @@ class WalletSelectorScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 100),
               Image.asset(
-                'assets/images/logo_ktr.png', // Replace with your logo asset path
+                'assets/images/logo_ktr.png',
                 width: 100,
                 height: 100,
               ),
               const SizedBox(height: 20),
-              // Welcome Text
-              const Text(
-                'Welcome to',
-                style: TextStyle(
+              Text(
+                _welcomeToText,
+                style: const TextStyle(
                   fontSize: 18,
                   color: Colors.white70,
                 ),
               ),
-              const Text(
-                'Kittyrun Wallet',
-                style: TextStyle(
+              Text(
+                _appTitleText,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
               const Spacer(),
-              const Text(
-                'Please make a selection below to create or import mnemonic',
-                style: TextStyle(
+              Text(
+                _selectionText,
+                style: const TextStyle(
                   fontSize: 10,
                   color: Colors.white70,
                 ),
@@ -108,7 +150,7 @@ class WalletSelectorScreen extends StatelessWidget {
                   if (hasAcceptedTerms) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SetupPinScreen()), // Navigate to the PIN setup screen
+                      MaterialPageRoute(builder: (context) => const SetupPinScreen()),
                     );
                   } else {
                     Navigator.push(
@@ -117,13 +159,9 @@ class WalletSelectorScreen extends StatelessWidget {
                     );
                   }
                 },
-                child: const Text(
-                  'Create New Wallet',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text(_createWalletText),
               ),
               const SizedBox(height: 20),
-              // "Import Mnemonic" Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
@@ -137,16 +175,13 @@ class WalletSelectorScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const ImportSeedScreen()),
                   );
                 },
-                child: const Text(
-                  'Import Mnemonic',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text(_importMnemonicText),
               ),
               const Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                  backgroundColor: Colors.red, // Màu đỏ để nhấn mạnh nút xóa
+                  backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -154,10 +189,7 @@ class WalletSelectorScreen extends StatelessWidget {
                 onPressed: () async {
                   await _removeWallet(context);
                 },
-                child: const Text(
-                  'Remove Wallet',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child: Text(_removeWalletText),
               ),
               const SizedBox(height: 50),
             ],
@@ -166,38 +198,77 @@ class WalletSelectorScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-
-
-class CreateWalletScreen extends StatelessWidget {
-  const CreateWalletScreen({Key? key}) : super(key: key);
-
-  Future<bool> _checkIfAcceptedTerms() async {
+  Future<bool> checkIfAcceptedTerms() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('acceptedTerms') ?? false;
+  }
+}
+
+class CreateWalletScreen extends StatefulWidget {
+  const CreateWalletScreen({Key? key}) : super(key: key);
+
+  @override
+  _CreateWalletScreenState createState() => _CreateWalletScreenState();
+}
+
+class _CreateWalletScreenState extends State<CreateWalletScreen> {
+  String _createWalletText = '';
+  String _importMnemonicText = '';
+  String _welcomeToText = '';
+  String _appTitleText = '';
+  String _selectionText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalization();
+  }
+
+  Future<void> _loadLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+
+    setState(() {
+      _createWalletText = LocalizationService.translate('wallet_selector_screen.create_wallet');
+      _importMnemonicText = LocalizationService.translate('wallet_selector_screen.import_mnemonic');
+      _welcomeToText = LocalizationService.translate('wallet_selector_screen.welcome_to');
+      _appTitleText = LocalizationService.translate('wallet_selector_screen.app_title');
+      _selectionText = LocalizationService.translate('wallet_selector_screen.selection_text');
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Check if PIN is null
-    if (SessionManager.userPin == null) {
-      // If PIN is null, redirect to SetupPinScreen
-      Future.microtask(() {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SetupPinScreen()),
-        );
-      });
-    }
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF66BB6A), // Light green
-              Color(0xFF004D40), // Dark green
+              Color(0xFF66BB6A),
+              Color(0xFF004D40),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -210,31 +281,30 @@ class CreateWalletScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 100),
               Image.asset(
-                'assets/images/logo_ktr.png', // Replace with your logo asset path
+                'assets/images/logo_ktr.png',
                 width: 100,
                 height: 100,
               ),
               const SizedBox(height: 20),
-              // Welcome Text
-              const Text(
-                'Welcome to',
-                style: TextStyle(
+              Text(
+                _welcomeToText,
+                style: const TextStyle(
                   fontSize: 18,
                   color: Colors.white70,
                 ),
               ),
-              const Text(
-                'Kittyrun Wallet',
-                style: TextStyle(
+              Text(
+                _appTitleText,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
               const Spacer(),
-              const Text(
-                'Please make a selection below to create or import mnemonic',
-                style: TextStyle(
+              Text(
+                _selectionText,
+                style: const TextStyle(
                   fontSize: 10,
                   color: Colors.white70,
                 ),
@@ -247,27 +317,15 @@ class CreateWalletScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () async {
-                  bool hasAcceptedTerms = await _checkIfAcceptedTerms();
-                  if (hasAcceptedTerms) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SetupPinScreen()), // Navigate to the PIN setup screen
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const TermsScreen()),
-                    );
-                  }
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SetupPinScreen()),
+                  );
                 },
-                child: const Text(
-                  'Create New Wallet',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text(_createWalletText),
               ),
               const SizedBox(height: 20),
-              // "Import Mnemonic" Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
@@ -281,12 +339,9 @@ class CreateWalletScreen extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const ImportSeedScreen()),
                   );
                 },
-                child: const Text(
-                  'Import Mnemonic',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text(_importMnemonicText),
               ),
-              const SizedBox(height: 50), // Adds a 50-pixel gap at the bottom
+              const SizedBox(height: 50), // Thêm khoảng cách
             ],
           ),
         ),
@@ -294,8 +349,6 @@ class CreateWalletScreen extends StatelessWidget {
     );
   }
 }
-
-
 
 class ImportSeedScreen extends StatelessWidget {
   const ImportSeedScreen({Key? key}) : super(key: key);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'wallet_create.dart';
 import 'login_wallet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptowallet/services/localization_service.dart';
 
 class VerifyWalletPage extends StatefulWidget {
   final String encryptedMnemonic;
@@ -8,11 +10,11 @@ class VerifyWalletPage extends StatefulWidget {
   final String generatedMnemonic;
 
   const VerifyWalletPage({
-    super.key,
+    Key? key,
     required this.encryptedMnemonic,
     required this.password,
     required this.generatedMnemonic,
-  });
+  }) : super(key: key);
 
   @override
   _VerifyWalletPageState createState() => _VerifyWalletPageState();
@@ -22,20 +24,66 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
   List<TextEditingController> verificationControllers =
   List.generate(4, (_) => TextEditingController());
   String errorMessage = '';
+  String _verifyWalletTitle = '';
+  String _generatedMnemonicText = '';
+  String _confirmBackupText = '';
+  String _enterWordsText = '';
+  String _cancelText = '';
+  String _verifyText = '';
 
-  // Function to show popup for entering the backup words
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalization(); // Load localization
+  }
+
+  Future<void> _loadLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+    setState(() {
+      _verifyWalletTitle = LocalizationService.translate('verify_wallet_screen.title');
+      _generatedMnemonicText = LocalizationService.translate('verify_wallet_screen.generated_mnemonic');
+      _confirmBackupText = LocalizationService.translate('verify_wallet_screen.confirm_backup');
+      _enterWordsText = LocalizationService.translate('verify_wallet_screen.enter_words');
+      _cancelText = LocalizationService.translate('verify_wallet_screen.cancel');
+      _verifyText = LocalizationService.translate('verify_wallet_screen.verify');
+    });
+  }
+
   void _showBackupDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Enter 4 words from your seed phrase'),
+          title: Text(_enterWordsText),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: verificationControllers
                 .map((controller) => TextField(
               controller: controller,
-              decoration: const InputDecoration(labelText: 'Word'),
+              decoration: InputDecoration(labelText: 'Word'),
             ))
                 .toList(),
           ),
@@ -44,14 +92,14 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close popup
               },
-              child: const Text('Cancel'),
+              child: Text(_cancelText),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close popup
                 verifyMnemonic(); // Verify mnemonic after input
               },
-              child: const Text('Verify'),
+              child: Text(_verifyText),
             ),
           ],
         );
@@ -70,7 +118,6 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
         setState(() {
           errorMessage = "Verification successful!";
         });
-        // Navigate to login page after successful verification
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -93,11 +140,10 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Wallet'),
+        title: Text(_verifyWalletTitle),
       ),
       body: Row(
         children: [
-          // Left column: Background with gradient
           Expanded(
             flex: 1,
             child: Container(
@@ -112,7 +158,6 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Replace with your actual KTR logo image
                     Image.asset(
                       'assets/images/logo_ktr.png',
                       height: 200,
@@ -132,7 +177,6 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
               ),
             ),
           ),
-          // Right column: Form and verification
           Expanded(
             flex: 2,
             child: Center(
@@ -141,9 +185,8 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Your generated mnemonic: Please save it securely and ensure it is not shared with others.'),
+                    Text(_generatedMnemonicText),
                     const SizedBox(height: 20),
-                    // Display mnemonic words in a grid
                     Column(
                       children: List.generate(4, (rowIndex) {
                         return Row(
@@ -172,8 +215,8 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _showBackupDialog, // Button to open backup popup
-                      child: const Text('Confirm backup wallet'),
+                      onPressed: _showBackupDialog,
+                      child: Text(_confirmBackupText),
                     ),
                     if (errorMessage.isNotEmpty)
                       Padding(
@@ -193,3 +236,4 @@ class _VerifyWalletPageState extends State<VerifyWalletPage> {
     );
   }
 }
+

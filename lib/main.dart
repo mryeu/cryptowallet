@@ -6,6 +6,7 @@ import 'package:cryptowallet/terms_screen.dart';
 import 'package:cryptowallet/wallet_create.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptowallet/services/localization_service.dart'; // Tích hợp LocalizationService
 import 'Play_Screen.dart';
 import 'Swap_Screen.dart';
 import 'Wallet_screen.dart';
@@ -22,6 +23,10 @@ void main() async {
 
   // Check if PIN is set
   String? userPin = SessionManager.userPin;
+
+  // Load the selected language for localization
+  String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+  await LocalizationService.load(selectedLanguage);
 
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
@@ -62,7 +67,6 @@ class _WalletScreenState extends State<WalletScreen> {
   // Check if PIN is set before allowing access
   void _checkPinStatus() {
     if (SessionManager.userPin == null) {
-      // If PIN is null, redirect to SetupPinScreen
       Future.microtask(() {
         Navigator.pushReplacement(
           context,
@@ -98,8 +102,7 @@ class _WalletScreenState extends State<WalletScreen> {
       mnemonic = walletDataDecrypt?['decrypted_mnemonic'];
     } catch (e) {
       print('Error fetching mnemonic: $e');
-      // Show error dialog
-      _showErrorDialog(context, 'Failed to fetch mnemonic. Please try again.');
+      _showErrorDialog(context, LocalizationService.translate('wallet_screen.error_fetching_mnemonic'));
       return;
     }
 
@@ -113,12 +116,11 @@ class _WalletScreenState extends State<WalletScreen> {
         },
       );
     } else {
-      // Show an error if mnemonic is null
-      _showErrorDialog(context, 'Mnemonic not found. Please check your wallet.');
+      _showErrorDialog(context, LocalizationService.translate('wallet_screen.mnemonic_not_found'));
     }
   }
 
-// Helper function to prompt the user for a password or PIN (optional)
+  // Helper function to prompt the user for a password or PIN (optional)
   Future<String?> _promptForPassword(BuildContext context) async {
     TextEditingController _passwordController = TextEditingController();
 
@@ -130,10 +132,10 @@ class _WalletScreenState extends State<WalletScreen> {
             borderRadius: BorderRadius.circular(12.0),
           ),
           title: Text(
-            'Restore Wallet',
-            textAlign: TextAlign.center, // Căn giữa chữ
-            style: TextStyle(
-              color: Colors.red, // Đặt màu chữ là màu đỏ
+            LocalizationService.translate('wallet_screen.restore_wallet'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.red,
               fontSize: 20.0,
               fontWeight: FontWeight.bold,
             ),
@@ -141,22 +143,22 @@ class _WalletScreenState extends State<WalletScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'You have not backed up your wallet. You need to store the 12 mnemonic words to protect your assets.',
-                style: TextStyle(fontSize: 16.0, color: Colors.red,),
+              Text(
+                LocalizationService.translate('wallet_screen.restore_wallet_description'),
+                style: const TextStyle(fontSize: 16.0, color: Colors.red),
               ),
               const SizedBox(height: 16.0),
-              const Text(
-                'Enter your password to start restoring your wallet:',
-                style: TextStyle(fontSize: 14.0),
+              Text(
+                LocalizationService.translate('wallet_screen.enter_password'),
+                style: const TextStyle(fontSize: 14.0),
               ),
               const SizedBox(height: 16.0),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your password',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: LocalizationService.translate('wallet_screen.enter_password'),
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -166,13 +168,13 @@ class _WalletScreenState extends State<WalletScreen> {
               onPressed: () {
                 Navigator.of(context).pop(); // Cancel the action
               },
-              child: const Text('Cancel'),
+              child: Text(LocalizationService.translate('wallet_screen.cancel')),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(_passwordController.text); // Return the entered password
               },
-              child: const Text('Submit'),
+              child: Text(LocalizationService.translate('wallet_screen.submit')),
             ),
           ],
         );
@@ -180,9 +182,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-
-
-// Helper function to show an error dialog
+  // Helper function to show an error dialog
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
@@ -202,7 +202,6 @@ class _WalletScreenState extends State<WalletScreen> {
       },
     );
   }
-
 
   // When a tab is selected, update the selected tab index
   void _onItemTapped(int index) {
@@ -284,10 +283,60 @@ class _BackupDialogState extends State<BackupDialog> {
   bool _checkboxConfirmed = false;
   bool _isConfirmed = false;
 
+  // Các chuỗi được dùng trong Backup Dialog
+  late String _backupTitle = '';
+  late String _backupDescription = '';
+  late String _laterText = '';
+  late String _confirmText = '';
+  late String _validateText = '';
+  late String _mnemonicError = '';
+  late String _backupSuccess = '';
+  late String _iHaveWrittenMnemonic = ''; // Biến đã bỏ qua được thêm lại
+
   @override
   void initState() {
     super.initState();
     _generateRandomPositions();
+    _loadBackupDialogLocalization(); // Tải chuỗi văn bản cho hộp thoại sao lưu
+  }
+
+  Future<void> _loadBackupDialogLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+
+    setState(() {
+      // Khởi tạo các biến chuỗi với giá trị dịch
+      _backupTitle = LocalizationService.translate('backup_dialog.title');
+      _backupDescription = LocalizationService.translate('backup_dialog.description');
+      _laterText = LocalizationService.translate('backup_dialog.later');
+      _confirmText = LocalizationService.translate('backup_dialog.confirm');
+      _validateText = LocalizationService.translate('backup_dialog.validate');
+      _mnemonicError = LocalizationService.translate('backup_dialog.mnemonic_error');
+      _backupSuccess = LocalizationService.translate('backup_dialog.backup_success');
+      _iHaveWrittenMnemonic = LocalizationService.translate('backup_dialog.i_have_written_mnemonic'); // Khôi phục biến bị thiếu
+    });
   }
 
   void _generateRandomPositions() {
@@ -305,12 +354,12 @@ class _BackupDialogState extends State<BackupDialog> {
     final mnemonicWords = widget.mnemonic.split(' ');
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)), // Bo tròn góc cho AlertDialog
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: SingleChildScrollView(
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.green[900]!, Colors.green[200]!], // Gradient từ xanh đậm tới xanh nhạt
+              colors: [Colors.green[900]!, Colors.green[200]!],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -322,14 +371,14 @@ class _BackupDialogState extends State<BackupDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Backup Wallet',
-                style: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
+                _backupTitle.isNotEmpty ? _backupTitle : 'Backup Wallet', // Kiểm tra chuỗi trước khi hiển thị
+                style: const TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16.0),
               Text(
-                'Here are your 12 mnemonic words:',
-                style: TextStyle(color: Colors.white),
+                _backupDescription.isNotEmpty ? _backupDescription : 'Please backup your wallet.',
+                style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16.0),
               Wrap(
@@ -339,20 +388,19 @@ class _BackupDialogState extends State<BackupDialog> {
                   final index = entry.key;
                   final word = entry.value;
 
-                  // Đánh số thứ tự cho từ mnemonic và hiển thị chữ màu trắng
                   return Chip(
                     label: Text(
                       '${index + 1}. $word',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
-                    backgroundColor: Colors.green[500], // Nền xanh cố định cho các từ
+                    backgroundColor: Colors.green[500],
                   );
                 }).toList(),
               ),
               CheckboxListTile(
                 title: Text(
-                  'I have written down the 12 mnemonic words',
-                  style: TextStyle(color: Colors.red),
+                  _iHaveWrittenMnemonic.isNotEmpty ? _iHaveWrittenMnemonic : 'I have written down the 12 mnemonic words',
+                  style: const TextStyle(color: Colors.red),
                 ),
                 value: _checkboxConfirmed,
                 onChanged: (bool? value) {
@@ -360,24 +408,23 @@ class _BackupDialogState extends State<BackupDialog> {
                     _checkboxConfirmed = value!;
                   });
                 },
-                checkColor: Colors.white, // Màu dấu tick
-                activeColor: Colors.green[300], // Màu hộp tick khi chọn
+                checkColor: Colors.white,
+                activeColor: Colors.green[300],
               ),
               if (_checkboxConfirmed) _mnemonicInputFields(mnemonicWords),
-              const SizedBox(height: 16.0), // Khoảng cách giữa nội dung và nút
+              const SizedBox(height: 16.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Nút "Backup Later"
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pop(); // Đóng dialog
                     },
-                    child: Text('Later', style: TextStyle(color: Colors.red)),
+                    child: Text(_laterText.isNotEmpty ? _laterText : 'Later', style: const TextStyle(color: Colors.red)),
                   ),
                   ElevatedButton(
                     onPressed: _isConfirmed ? _confirmBackup : null,
-                    child: Text('Confirm', style: TextStyle(color: Colors.white)),
+                    child: Text(_confirmText.isNotEmpty ? _confirmText : 'Confirm', style: const TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -388,25 +435,26 @@ class _BackupDialogState extends State<BackupDialog> {
     );
   }
 
-
-
   Widget _mnemonicInputFields(List<String> mnemonicWords) {
     return Column(
       children: [
-        Text('Please enter the following words based on their positions:', style: TextStyle(color: Colors.white),),
+        Text(
+          _validateText.isNotEmpty ? _validateText : 'Please enter the following words based on their positions:',
+          style: const TextStyle(color: Colors.white),
+        ),
         for (int i = 0; i < 4; i++)
           TextField(
             controller: _mnemonicControllers[i],
             decoration: InputDecoration(
-              labelText: 'Word at position ${_randomPositions[i] + 1}',
-              border: OutlineInputBorder(),
+              labelText: '${LocalizationService.translate('backup_dialog.word_at_position')} ${_randomPositions[i] + 1}',
+              border: const OutlineInputBorder(),
             ),
           ),
         ElevatedButton(
           onPressed: () {
             _validateMnemonics(mnemonicWords);
           },
-          child: Text('Validate'),
+          child: Text(_validateText.isNotEmpty ? _validateText : 'Validate'),
         ),
       ],
     );
@@ -426,11 +474,11 @@ class _BackupDialogState extends State<BackupDialog> {
         _isConfirmed = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backup successful')),
+        SnackBar(content: Text(_backupSuccess.isNotEmpty ? _backupSuccess : 'Backup successful!')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Mnemonic validation failed')),
+        SnackBar(content: Text(_mnemonicError.isNotEmpty ? _mnemonicError : 'Mnemonic validation failed')),
       );
     }
   }
@@ -438,6 +486,7 @@ class _BackupDialogState extends State<BackupDialog> {
   void _confirmBackup() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('hasBackedUp', true);
-    Navigator.of(context).pop(); // Close the dialog
+    Navigator.of(context).pop();
   }
 }
+

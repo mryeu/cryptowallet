@@ -23,5 +23,64 @@
     "terms_content": "KittyRun Wallet - Terms and Conditions\n\n1. **Decentralized Nature**: KittyRun Wallet is a non-custodial wallet. This means that you, the user, are fully responsible for managing your private keys and recovery phrases. We do not store, control, or have access to your private keys or funds.\n\n2. **Privacy**: As a decentralized wallet, KittyRun Wallet does not collect or store any personal information or transaction data. All your data is stored locally on your device and is never transmitted to our servers.\n\n3. **Self-Custody**: You are the sole owner of your assets. If you lose your private keys or recovery phrase, you will not be able to access your funds. It is your responsibility to securely store and back up your recovery phrase and private keys.\n\n4. **Transaction Responsibility**: All transactions initiated through KittyRun Wallet are irreversible and cannot be undone. You are fully responsible for verifying the details of your transactions before confirming them.\n\n5. **Security**: KittyRun Wallet employs industry-standard encryption to protect your data on your device. However, the security of your wallet also depends on the security of your device. You are responsible for safeguarding your device against unauthorized access, malware, and other security threats.\n\n6. **Updates**: We may release updates to improve security, fix bugs, or add new features. It is recommended that you keep the app updated to the latest version to ensure optimal performance and security.\n\n7. **No Liability**: KittyRun Wallet and its developers shall not be liable for any loss, damage, or expense arising from the use or inability to use the wallet, including but not limited to the loss of funds, data breaches, or unauthorized access to your device.\n\n8. **Acceptance of Terms**: By using KittyRun Wallet, you acknowledge that you have read, understood, and agreed to these terms. If you do not agree to any of these terms, you should discontinue the use of the wallet immediately.",
     "agree_to_terms": "I agree to the terms of use",
     "accept_button": "Accept"
+  },
+  "wallet_choice_screen": {
+    "title": "Wallet Setup",
+    "choose_option": "Choose an option to set up your wallet:",
+    "create_new_wallet": "Create New Wallet",
+    "import_mnemonic": "Import Mnemonic"
+  },
+  "import_mnemonic_screen": {
+    "title": "Import Mnemonic",
+    "enter_mnemonic": "Enter your 12-word mnemonic phrase:",
+    "mnemonic_error": "Invalid mnemonic phrase. Please enter exactly 12 words.",
+    "continue_button": "Continue"
+},
+  "verify_wallet_screen": {
+    "title": "Verify Wallet",
+    "generated_mnemonic": "Your generated mnemonic: Please save it securely and ensure it is not shared with others.",
+    "confirm_backup": "Confirm backup wallet",
+    "enter_words": "Enter 4 words from your seed phrase",
+    "cancel": "Cancel",
+    "verify": "Verify"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "Create New Wallet",
+    "import_mnemonic": "Import Mnemonic",
+    "remove_wallet": "Remove Wallet",
+    "welcome_to": "Welcome to",
+    "app_title": "Kittyrun Wallet",
+    "selection_text": "Please make a selection below to create or import mnemonic"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "Import Seed Phrase",
+    "import_seed_and_save_wallet": "Import Seed And Save Wallet"
+  },
+  "wallet_screen": {
+    "backup_wallet": "Backup Wallet",
+    "restore_wallet": "Restore Wallet",
+    "enter_password": "Enter your password to start restoring your wallet:",
+    "restore_wallet_description": "You have not backed up your wallet. You need to store the 12 mnemonic words to protect your assets.",
+    "later": "Later",
+    "confirm": "Confirm",
+    "backup_successful": "Backup successful",
+    "mnemonic_validation_failed": "Mnemonic validation failed",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "word_at_position": "Word at position",
+    "validate": "Validate"
+  },
+  "backup_dialog": {
+    "title": "Backup Wallet",
+    "description": "You need to backup your wallet to keep your assets safe. Make sure to write down the mnemonic words.",
+    "later": "Later",
+    "confirm": "Confirm",
+    "validate": "Validate",
+    "mnemonic_error": "Mnemonic validation failed. Please try again.",
+    "backup_success": "Backup successful!",
+    "i_have_written_mnemonic": "I have written down the 12 mnemonic words",
+    "enter_mnemonic_words": "Please enter the following words based on their positions:",
+    "word_at_position": "Word at position"
   }
+
 }

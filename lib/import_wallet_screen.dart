@@ -1,5 +1,7 @@
-import 'package:cryptowallet/pinScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptowallet/services/localization_service.dart';
+import 'package:cryptowallet/pinScreen.dart';
 
 class ImportMnemonicScreen extends StatefulWidget {
   const ImportMnemonicScreen({Key? key}) : super(key: key);
@@ -11,38 +13,74 @@ class ImportMnemonicScreen extends StatefulWidget {
 class _ImportMnemonicScreenState extends State<ImportMnemonicScreen> {
   TextEditingController mnemonicController = TextEditingController();
   String errorMessage = "";
+  String _pageTitle = "";
+  String _enterMnemonic = "";
+  String _mnemonicError = "";
+  String _continueButton = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalization(); // Load ngôn ngữ khi khởi tạo
+  }
+
+  Future<void> _loadLocalization() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    String selectedFlag = prefs.getString('selectedCountry') ?? 'us';
+    print("Selected Language: $selectedLanguage, Selected Flag: $selectedFlag");
+
+    List<String> validLanguages = ['en', 'zh', 'id', 'hi', 'vi', 'ko', 'ru', 'th', 'fr', 'pt', 'tr', 'ar'];
+    List<String> validCountries = ['us', 'cn', 'id', 'in', 'vn', 'kr', 'ru', 'th', 'fr', 'pt', 'tr', 'sa'];
+
+    if (!validLanguages.contains(selectedLanguage)) {
+      selectedLanguage = 'en';
+    }
+    if (!validCountries.contains(selectedFlag)) {
+      selectedFlag = 'us';
+    }
+
+    try {
+      await LocalizationService.load(selectedLanguage);
+    } catch (e) {
+      print("Error loading language file: $e");
+      await LocalizationService.load('en');
+
+      selectedLanguage = 'en';
+      selectedFlag = 'us';
+    }
+
+    setState(() {
+      _pageTitle = LocalizationService.translate('import_mnemonic_screen.title');
+      _enterMnemonic = LocalizationService.translate('import_mnemonic_screen.enter_mnemonic');
+      _mnemonicError = LocalizationService.translate('import_mnemonic_screen.mnemonic_error');
+      _continueButton = LocalizationService.translate('import_mnemonic_screen.continue_button');
+    });
+  }
 
   // Hàm kiểm tra tính hợp lệ của cụm từ mnemonic
   bool _isValidMnemonic(String mnemonic) {
-    // Tách cụm từ mnemonic thành danh sách từ
     List<String> words = mnemonic.trim().split(' ');
-
-    // Kiểm tra nếu có đúng 12 từ
-    if (words.length == 12) {
-      // Bạn có thể thêm các logic kiểm tra cụ thể hơn ở đây (nếu cần thiết)
-      return true;
-    } else {
-      return false;
-    }
+    return words.length == 12; // Kiểm tra nếu có đúng 12 từ
   }
 
   // Hàm khi nhấn tiếp tục
   void _onContinue() {
     String mnemonic = mnemonicController.text;
-
-    // Kiểm tra tính hợp lệ của cụm từ mnemonic
     if (_isValidMnemonic(mnemonic)) {
       setState(() {
-        errorMessage = ""; // Xóa thông báo lỗi nếu cụm từ hợp lệ
+        errorMessage = "";
       });
-      // Điều hướng tới màn hình nhập PIN sau khi nhập Mnemonic hợp lệ
+
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => SetupPinScreen(mnemonic: mnemonic),),
+        MaterialPageRoute(
+          builder: (context) => SetupPinScreen(mnemonic: mnemonic),
+        ),
       );
     } else {
       setState(() {
-        errorMessage = "Invalid mnemonic phrase. Please enter exactly 12 words.";
+        errorMessage = _mnemonicError; // Hiển thị thông báo lỗi đã dịch
       });
     }
   }
@@ -51,7 +89,7 @@ class _ImportMnemonicScreenState extends State<ImportMnemonicScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Import Mnemonic"),
+        title: Text(_pageTitle), // Sử dụng tiêu đề đã dịch
         centerTitle: true,
       ),
       body: Container(
@@ -69,16 +107,16 @@ class _ImportMnemonicScreenState extends State<ImportMnemonicScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Enter your 12-word mnemonic phrase:",
-              style: TextStyle(fontSize: 18, color: Colors.white),
+            Text(
+              _enterMnemonic, // Sử dụng chuỗi đã dịch
+              style: const TextStyle(fontSize: 18, color: Colors.white),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: mnemonicController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                labelText: 'Mnemonic Phrase',
+                labelText: _enterMnemonic, // Sử dụng văn bản đã dịch
                 errorText: errorMessage.isNotEmpty ? errorMessage : null,
               ),
               maxLines: 3,
@@ -93,7 +131,7 @@ class _ImportMnemonicScreenState extends State<ImportMnemonicScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("Continue", style: TextStyle(fontSize: 18)),
+              child: Text(_continueButton, style: const TextStyle(fontSize: 18)), // Sử dụng nút đã dịch
             ),
           ],
         ),

@@ -23,5 +23,63 @@
     "terms_content": "KittyRun 钱包 - 条款和条件\n\n1. **去中心化性质**：KittyRun 钱包是一个非托管钱包。这意味着您，作为用户，完全负责管理您的私钥和恢复短语。我们不存储、控制或访问您的私钥或资金。\n\n2. **隐私**：作为一个去中心化钱包，KittyRun 钱包不收集或存储任何个人信息或交易数据。您的所有数据都存储在您的设备本地，永远不会传输到我们的服务器。\n\n3. **自我保管**：您是资产的唯一所有者。如果您丢失了您的私钥或恢复短语，您将无法访问您的资金。您有责任安全地存储和备份您的恢复短语和私钥。\n\n4. **交易责任**：通过 KittyRun 钱包发起的所有交易都是不可逆的，无法撤销。您完全负责在确认交易之前验证交易的详细信息。\n\n5. **安全性**：KittyRun 钱包采用行业标准的加密技术来保护您设备上的数据。然而，钱包的安全性也取决于您设备的安全性。您有责任保护您的设备免受未经授权的访问、恶意软件和其他安全威胁。\n\n6. **更新**：我们可能会发布更新以提高安全性、修复错误或添加新功能。建议您将应用程序更新到最新版本，以确保最佳性能和安全性。\n\n7. **免责条款**：KittyRun 钱包及其开发者不对因使用或无法使用该钱包而导致的任何损失、损害或费用承担任何责任，包括但不限于资金损失、数据泄露或未经授权访问您的设备。\n\n8. **接受条款**：通过使用 KittyRun 钱包，您承认您已阅读、理解并同意这些条款。如果您不同意这些条款中的任何一条，您应立即停止使用该钱包。",
     "agree_to_terms": "我同意使用条款",
     "accept_button": "接受"
+  },
+  "wallet_choice_screen": {
+    "title": "钱包设置",
+    "choose_option": "请选择一个选项来设置您的钱包：",
+    "create_new_wallet": "创建新钱包",
+    "import_mnemonic": "导入助记词"
+},
+  "import_mnemonic_screen": {
+  "title": "导入助记词",
+  "enter_mnemonic": "请输入您的12个助记词单词：",
+  "mnemonic_error": "无效的助记词短语。请输入正确的12个单词。",
+  "continue_button": "继续"
+},
+  "verify_wallet_screen": {
+    "title": "验证钱包",
+    "generated_mnemonic": "您生成的助记词：请妥善保存，并确保不要与他人共享。",
+    "confirm_backup": "确认备份钱包",
+    "enter_words": "请输入您的助记词中的4个单词",
+    "cancel": "取消",
+    "verify": "验证"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "创建新钱包",
+    "import_mnemonic": "导入助记词",
+    "remove_wallet": "删除钱包",
+    "welcome_to": "欢迎来到",
+    "app_title": "Kittyrun 钱包",
+    "selection_text": "请选择以下选项来创建或导入助记词"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "导入种子短语",
+    "import_seed_and_save_wallet": "导入种子并保存钱包"
+  },
+  "wallet_screen": {
+    "backup_wallet": "备份钱包",
+    "restore_wallet": "恢复钱包",
+    "enter_password": "请输入您的密码以开始恢复钱包:",
+    "restore_wallet_description": "您尚未备份钱包。 您需要保存 12 个助记词来保护您的资产。",
+    "later": "稍后",
+    "confirm": "确认",
+    "backup_successful": "备份成功",
+    "mnemonic_validation_failed": "助记词验证失败",
+    "submit": "提交",
+    "cancel": "取消",
+    "word_at_position": "位置的单词",
+    "validate": "验证"
+  },
+  "backup_dialog": {
+    "title": "备份钱包",
+    "description": "您需要备份您的钱包以确保资产安全。请务必记下助记词。",
+    "later": "稍后",
+    "confirm": "确认",
+    "validate": "验证",
+    "mnemonic_error": "助记词验证失败。请再试一次。",
+    "backup_success": "备份成功！",
+    "i_have_written_mnemonic": "我已写下12个助记词",
+    "enter_mnemonic_words": "请根据以下位置输入助记词：",
+    "word_at_position": "第几位的助记词"
   }
 }
