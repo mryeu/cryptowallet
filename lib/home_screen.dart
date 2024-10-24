@@ -13,21 +13,35 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isDisposed = false; // Track if the widget is disposed
   List<dynamic> newsItems = [];
+  String languageCode = 'en';  // Mặc định là tiếng Anh
 
   @override
   void initState() {
     super.initState();
-    fetchNewsData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        languageCode = Localizations.localeOf(context).languageCode;
+        print('Language Code: $languageCode');
+        fetchNewsData();
+      });
+    });
   }
+
 
 
   Future<void> fetchNewsData() async {
     try {
-      final response = await http.get(Uri.parse('https://kittyrun.io/api/content-mobile'));
+      final response = await http.get(Uri.parse(
+          'https://api-admin.kittyrun.net/api/content-mobile/?format=json'));
       if (response.statusCode == 200 && mounted) {
-        setState(() {
-          newsItems = json.decode(response.body);
-        });
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse.containsKey('data')) {
+          setState(() {
+            newsItems = jsonResponse['data'];
+          });
+        } else {
+          print('Data field missing in response');
+        }
       } else {
         print('Failed to load data');
       }
@@ -44,7 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  @override
+  // Hàm để lấy nội dung theo ngôn ngữ của thiết bị
+  String getLocalizedText(Map<String, dynamic> data) {
+    return data[languageCode] ?? data['en'] ?? ''; // Mặc định trả về tiếng Anh nếu không tìm thấy ngôn ngữ
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
@@ -76,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         image: DecorationImage(
-                          image: AssetImage(item['imagesource']),
+                          image: NetworkImage(item['imagesource']), // Sử dụng NetworkImage thay cho AssetImage
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -88,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          item['title'],
+                          getLocalizedText(item['title']),
                           style: const TextStyle(
                             fontSize: 24,
                             color: Colors.white,
@@ -119,15 +137,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: ListTile(
                       title: Text(
-                        item['title'],
+                        getLocalizedText(item['title']),
                         style: const TextStyle(fontSize: 14),
                       ),
                       subtitle: Text(
-                        item['content'],
+                        getLocalizedText(item['content']),
                         style: const TextStyle(fontSize: 12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      leading: const Icon(Icons.fiber_new, color: Colors.green),
+                      leading: Image.network(
+                        item['imagesource'],
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      ),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () {
                         _showNewsDetailPopup(context, item);
@@ -157,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (BuildContext context) {
         return DraggableScrollableSheet(
           expand: false,
-          maxChildSize: 0.75,
+          maxChildSize: 0.9,
           minChildSize: 0.5,
           initialChildSize: 0.75,
           builder: (context, scrollController) {
@@ -165,35 +188,53 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: scrollController,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Stack(
                   children: [
-                    const Text(
-                      'News Detail',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 40),
+                        Text(
+                          getLocalizedText(newsItem['title']),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+
+                        AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: Image.network(
+                            newsItem['imagesource'],
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Text(
+                          getLocalizedText(newsItem['content']),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Kittyrun Studio 2024 news',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      newsItem['title'],
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      newsItem['content'],
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Additional details about the news...',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: ElevatedButton(
+
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
-                        child: const Text('Close'),
                       ),
                     ),
                   ],

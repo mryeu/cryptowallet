@@ -170,7 +170,84 @@ String ethereumAddressFromPrivateKey(Uint8List privateKey) {
   return '0x${HEX.encode(addressBytes)}';
 }
 
+Future<void> editWalletName(String walletAddress, String newName) async {
+  try {
+    // Tải dữ liệu ví hiện tại từ file JSON
+    final walletData = await loadWalletFromJson();
 
+    if (walletData == null) {
+      print('Không tìm thấy dữ liệu ví.');
+      return;
+    }
+
+    // Tìm địa chỉ ví và cập nhật tên ví tương ứng
+    List<String> addresses = List<String>.from(walletData['addresses']);
+    List<String> walletNames = List<String>.from(walletData['wallet_names']);
+
+    int walletIndex = addresses.indexOf(walletAddress);
+    if (walletIndex == -1) {
+      print('Không tìm thấy địa chỉ ví.');
+      return;
+    }
+
+    // Cập nhật tên ví mới
+    walletNames[walletIndex] = newName;
+
+    // Lưu dữ liệu ví đã cập nhật vào file JSON
+    final updatedWalletData = {
+      'encrypted_mnemonic': walletData['encrypted_mnemonic'],
+      'encrypted_private_keys': walletData['encrypted_private_keys'],
+      'addresses': addresses,
+      'wallet_names': walletNames,
+    };
+
+    await saveWalletToJson(updatedWalletData);
+    print('Đã cập nhật tên ví thành công.');
+  } catch (e) {
+    print('Lỗi khi sửa tên ví: $e');
+  }
+}
+
+Future<void> deleteWallet(String walletAddress) async {
+  try {
+    // Tải dữ liệu ví hiện tại từ file JSON
+    final walletData = await loadWalletFromJson();
+
+    if (walletData == null) {
+      print('Không tìm thấy dữ liệu ví.');
+      return;
+    }
+
+    // Tìm vị trí của địa chỉ ví để xóa
+    List<String> addresses = List<String>.from(walletData['addresses']);
+    List<String> walletNames = List<String>.from(walletData['wallet_names']);
+    List<String> encryptedPrivateKeys = List<String>.from(walletData['encrypted_private_keys']);
+
+    int walletIndex = addresses.indexOf(walletAddress);
+    if (walletIndex == -1) {
+      print('Không tìm thấy địa chỉ ví để xóa.');
+      return;
+    }
+
+    // Xóa địa chỉ, tên ví và private key tương ứng
+    addresses.removeAt(walletIndex);
+    walletNames.removeAt(walletIndex);
+    encryptedPrivateKeys.removeAt(walletIndex);
+
+    // Lưu dữ liệu đã cập nhật vào file JSON
+    final updatedWalletData = {
+      'encrypted_mnemonic': walletData['encrypted_mnemonic'],
+      'encrypted_private_keys': encryptedPrivateKeys,
+      'addresses': addresses,
+      'wallet_names': walletNames,
+    };
+
+    await saveWalletToJson(updatedWalletData);
+    print('Đã xóa ví thành công.');
+  } catch (e) {
+    print('Lỗi khi xóa ví: $e');
+  }
+}
 
 String encryptDataAES(String plaintext, String password) {
   // Tạo khóa AES từ mật khẩu bằng cách băm SHA-256

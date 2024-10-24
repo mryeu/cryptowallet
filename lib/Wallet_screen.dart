@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:country_flags/country_flags.dart';
 import 'package:cryptowallet/send_all_screen.dart';
 import 'package:cryptowallet/services/get_recent_transactions.dart';
 import 'package:cryptowallet/services/session_manager.dart';
@@ -11,10 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'check_balance.dart';
 import 'package:web3dart/credentials.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'check_price_ktr.dart';
+import 'langguage.dart';
 
 
 class Wallet extends StatefulWidget {
@@ -33,13 +36,29 @@ class _WalletState extends State<Wallet> {
   List<Map<String, dynamic>> wallets = []; // Placeholder for wallet details
 
   final TokenBalanceChecker _balanceChecker = TokenBalanceChecker(); // Initialize TokenBalanceChecker
+  String selectedFlag = 'us';  // Mặc định là cờ Mỹ
 
   @override
   void initState() {
     super.initState();
     _loadWalletData();
+    _loadSelectedLanguageFlag();  // Tải cờ đã lưu khi khởi động
+
+  }
+  Future<void> _loadSelectedLanguageFlag() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String flagCode = prefs.getString('selectedLanguage') ?? 'us';  // Nếu không có, mặc định là cờ Mỹ
+    setState(() {
+      selectedFlag = flagCode;
+    });
   }
 
+  // Khi người dùng chọn ngôn ngữ mới từ dialog
+  void _onLanguageSelected(String flagCode) {
+    setState(() {
+      selectedFlag = flagCode;
+    });
+  }
   void _showCreateWalletDialog() {
     showDialog(
       context: context,
@@ -447,8 +466,7 @@ class _WalletState extends State<Wallet> {
                                 ? const CircularProgressIndicator()
                                 : TextButton(
                               onPressed: () async {
-                                String privateKeyInput = privateKeyController
-                                    .text;
+                                String privateKeyInput = privateKeyController.text;
                                 String? pin = SessionManager.userPin;
 
                                 if (privateKeyInput.isNotEmpty && pin != null) {
@@ -457,29 +475,25 @@ class _WalletState extends State<Wallet> {
                                   });
 
                                   try {
-                                    List<
-                                        String> privateKeyList = privateKeyInput
+                                    List<String> privateKeyList = privateKeyInput
                                         .split(RegExp(r'[\n,\s;|]+'))
                                         .map((key) => key.trim())
                                         .where((key) => key.isNotEmpty)
                                         .toList();
 
-                                    await importMultiPrivateKeys(
-                                        privateKeyList, pin);
+                                    await importMultiPrivateKeys(privateKeyList, pin);
                                     await _loadWalletData();
 
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text(
-                                            'Wallet(s) imported successfully!'),
+                                        content: Text('Wallet(s) imported successfully!'),
                                         backgroundColor: Colors.green,
                                       ),
                                     );
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(
-                                            'Failed to import wallet(s): $e'),
+                                        content: Text('Failed to import wallet(s): $e'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
@@ -492,8 +506,7 @@ class _WalletState extends State<Wallet> {
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
-                                          'PrivateKey is empty or PIN is not available'),
+                                      content: Text('PrivateKey is empty or PIN is not available'),
                                       backgroundColor: Colors.orange,
                                     ),
                                   );
@@ -510,14 +523,16 @@ class _WalletState extends State<Wallet> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.settings, color: Colors.green),
+              icon: CountryFlag.fromCountryCode(selectedFlag, height: 24, width: 32),  // Hiển thị cờ hiện tại
               onPressed: () {
-                print('Settings button clicked');
+                // Mở dialog chọn ngôn ngữ và cập nhật cờ sau khi chọn
+                LanguageSelectionDialog.show(context, _onLanguageSelected);
               },
             ),
             const SizedBox(width: 10),
           ],
         ),
+
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -853,104 +868,374 @@ class _WalletState extends State<Wallet> {
                     String privateKey = wallets[index + 1]['privateKey'];
                     String walletAddress = wallets[index + 1]['address'];
                     double walletBnbBalance = wallets[index + 1]['bnbBalance'];
-                    double walletUsdtBalance = wallets[index +
-                        1]['usdtBalance'];
+                    double walletUsdtBalance = wallets[index + 1]['usdtBalance'];
                     double walletKtrBalance = wallets[index + 1]['ktrBalance'];
+
                     String formatBalance(double value) {
                       String formattedValue = value.toStringAsFixed(4);
                       formattedValue = double.parse(formattedValue).toString();
                       return formattedValue;
                     }
+
                     String shortAddress = (walletAddress.length > 10)
-                        ? '${walletAddress.substring(0, 5)}...${walletAddress
-                        .substring(walletAddress.length - 5)}'
+                        ? '${walletAddress.substring(0, 5)}...${walletAddress.substring(walletAddress.length - 5)}'
                         : walletAddress;
 
-                    return Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Colors.green, width: 1),
-                      ),
-                      child: ListTile(
-                        title: Row(
-                          children: [
-                            Text(
-                              walletName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
+                    return GestureDetector(
+                      onLongPress: () {
+                        _showWalletOptionsDialog(context, walletName,  walletAddress, privateKey); // Pass walletName for actions
+                      },
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: const BorderSide(color: Colors.green, width: 1),
+                        ),
+                        child: ListTile(
+                          title: Row(
+                            children: [
+                              Text(
+                                walletName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                shortAddress,
-                                style: const TextStyle(color: Colors.grey),
-                                overflow: TextOverflow.ellipsis,
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  shortAddress,
+                                  style: const TextStyle(color: Colors.grey),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Row(
+                                children: [
+                                  Image.asset('assets/images/bnb-bnb-logo.png', width: 24, height: 24),
+                                  const SizedBox(width: 4),
+                                  Text(formatBalance(walletBnbBalance)),
+                                ],
+                              ),
+                              const SizedBox(width: 10),
+                              Row(
+                                children: [
+                                  Image.asset('assets/images/usdt_logo.png', width: 24, height: 24),
+                                  const SizedBox(width: 4),
+                                  Text(formatBalance(walletUsdtBalance)),
+                                ],
+                              ),
+                              const SizedBox(width: 10),
+                              Row(
+                                children: [
+                                  Image.asset('assets/images/logo_ktr.png', width: 24, height: 24),
+                                  const SizedBox(width: 4),
+                                  Text(formatBalance(walletKtrBalance)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.more_vert),
+                            color: Colors.green,
+                            onPressed: () {
+                              showWalletDetails(privateKey, walletName, walletAddress, walletBnbBalance, walletUsdtBalance, walletKtrBalance);
+                            },
+                          ),
                         ),
-                        subtitle: Row(
-                          children: [
-                            Row(
-                              children: [
-                                Image.asset(
-                                    'assets/images/bnb-bnb-logo.png', width: 24,
-                                    height: 24),
-                                const SizedBox(width: 4),
-                                Text(formatBalance(walletBnbBalance)),
-                              ],
-                            ),
-                            const SizedBox(width: 10),
-                            Row(
-                              children: [
-                                Image.asset(
-                                    'assets/images/usdt_logo.png', width: 24,
-                                    height: 24),
-                                const SizedBox(width: 4),
-                                Text(formatBalance(walletUsdtBalance)),
-                              ],
-                            ),
-                            const SizedBox(width: 10),
-                            Row(
-                              children: [
-                                Image.asset(
-                                    'assets/images/logo_ktr.png', width: 24,
-                                    height: 24),
-                                const SizedBox(width: 4),
-                                Text(formatBalance(walletKtrBalance)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.more_vert),
-                          // Biểu tượng ba chấm dọc
-                          color: Colors.green,
-                          // Đặt màu xanh cho biểu tượng
-                          onPressed: () {
-                            showWalletDetails(privateKey,
-                                walletName, walletAddress, walletBnbBalance,
-                                walletUsdtBalance,
-                                walletKtrBalance);
-                          },
-                        ),
-
                       ),
                     );
                   },
                 ),
-              ),
+              )
             ],
           ),
         ),
       ),
     );
   }
+  void _showWalletOptionsDialog(BuildContext context, String walletName, String walletAddress, String privateKey) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Center(
+            child: Text(
+              'Wallet Options',
+              style: const TextStyle(
+                color: Colors.green, // Set the color to green
+                fontWeight: FontWeight.bold, // Optionally, make the text bold
+              ),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8), // Add space between buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog
+                        _editWalletName(context, walletName); // Call Edit Wallet Name Function
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      child: const Text('Edit Wallet Name', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8), // Add space between buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog
+                        _showPrivateKeyDialog(context, privateKey); // Call Show Private Key Dialog
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                      child: const Text('Show Private Key', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8), // Add space between buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog
+                        _showDeleteConfirmation(context, walletAddress); // Call Delete Confirmation Dialog
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text('Delete Wallet', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-  // Function to show full-screen wallet details
+// Dialog yêu cầu mật khẩu để hiển thị Private Key
+  void _showPrivateKeyDialog(BuildContext context, String privateKey) {
+    TextEditingController passwordController = TextEditingController();
+    String? userPin = SessionManager.userPin; // Lấy userPin từ SessionManager
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Enter Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: passwordController,
+                obscureText: true, // Mật khẩu sẽ được ẩn
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  hintText: 'Enter your password',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng dialog nếu hủy
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                String enteredPassword = passwordController.text;
+
+                // So sánh enteredPassword với userPin
+                if (enteredPassword == userPin) {
+                  Navigator.of(context).pop(); // Đóng dialog yêu cầu mật khẩu
+                  _showPrivateKey(context, privateKey); // Gọi hàm hiển thị private key
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Incorrect Password'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+// Hiển thị private key và cho phép sao chép
+  void _showPrivateKey(BuildContext context, String privateKey) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Your Private Key'),
+          content: SelectableText(privateKey), // Cho phép người dùng sao chép private key
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng dialog
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Sao chép private key vào clipboard
+                Clipboard.setData(ClipboardData(text: privateKey));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Private Key copied to clipboard'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.of(context).pop(); // Đóng dialog sau khi sao chép
+              },
+              child: const Text('Copy Private Key'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editWalletName(BuildContext context, String walletName) {
+    TextEditingController _controller = TextEditingController(text: walletName);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Wallet Name'),
+          content: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(labelText: 'Enter new wallet name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel', style: TextStyle(color: Colors.orange)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Find and store the old wallet before updating
+                final oldWallet = wallets.firstWhere((wallet) => wallet['name'] == walletName);
+
+                // Update the wallet name in the local list
+                setState(() {
+                  oldWallet['name'] = _controller.text; // Update the wallet name in memory
+                });
+                // Call the editWalletName function with the wallet address and the new name
+                await editWalletName(oldWallet['address'], _controller.text);
+                // Close the dialog
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Save', style: TextStyle(color: Colors.white),),
+            ),
+
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String walletAddress) {
+    bool isChecked = false; // Track whether the checkbox is checked
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Confirm Delete'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Are you sure you want to delete this wallet? This action cannot be undone.'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isChecked,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isChecked = value ?? false; // Update checkbox state
+                          });
+                        },
+                      ),
+                      const Text('I confirm to delete this wallet.')
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text('Cancel', style: TextStyle(color: Colors.orange)),
+                ),
+                ElevatedButton(
+                  onPressed: isChecked
+                      ? () {
+                    deleteWallet(walletAddress);
+                    Navigator.of(context).pop();
+                    _updateWalletState(walletAddress);
+                  }
+                      : null,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _updateWalletState(String walletAddress) {
+    setState(() {
+      wallets.removeWhere((wallet) => wallet['address'] == walletAddress);
+    });
+  }
+
+    // Function to show full-screen wallet details
   Future<List> loadTransactionDataWithDuplicates(List transactions) async {
     Map<String, int> addressCount = {};
 
@@ -1317,8 +1602,7 @@ class _WalletState extends State<Wallet> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                      ),
+                                       ),
                                       child: const Text('Withdraw', style: TextStyle(color: Colors.white)),
                                     ),
                                   ),
