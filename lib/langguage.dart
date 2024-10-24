@@ -3,15 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:country_flags/country_flags.dart';
 
 class LanguageSelectionDialog {
-  static Future<void> show(BuildContext context, Function(String) onLanguageSelected) async {
+  static Future<void> show(BuildContext context, Function(String, String) onLanguageSelected) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'us';
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';  // Sử dụng 'en' mặc định
+    String selectedCountry = prefs.getString('selectedCountry') ?? 'us';  // Sử dụng 'us' mặc định
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return _LanguageSelectionDialog(
           selectedLanguage: selectedLanguage,
+          selectedCountry: selectedCountry,
           onLanguageSelected: onLanguageSelected,
         );
       },
@@ -21,16 +23,23 @@ class LanguageSelectionDialog {
 
 class _LanguageSelectionDialog extends StatefulWidget {
   final String selectedLanguage;
-  final Function(String) onLanguageSelected;
+  final String selectedCountry;
+  final Function(String, String) onLanguageSelected;
 
-  const _LanguageSelectionDialog({Key? key, required this.selectedLanguage, required this.onLanguageSelected}) : super(key: key);
+  const _LanguageSelectionDialog({
+    Key? key,
+    required this.selectedLanguage,
+    required this.selectedCountry,
+    required this.onLanguageSelected,
+  }) : super(key: key);
 
   @override
   __LanguageSelectionDialogState createState() => __LanguageSelectionDialogState();
 }
 
 class __LanguageSelectionDialogState extends State<_LanguageSelectionDialog> {
-  String selectedLanguage = 'us';
+  String selectedLanguage = 'en';  // Mặc định là English
+  String selectedCountry = 'us';  // Mặc định là US
 
   final List<Map<String, String>> languages = [
     {'code': 'en', 'name': 'English', 'flag': 'us'},  // Cờ Mỹ
@@ -44,18 +53,21 @@ class __LanguageSelectionDialogState extends State<_LanguageSelectionDialog> {
     {'code': 'fr', 'name': 'French', 'flag': 'fr'},  // Cờ Pháp
     {'code': 'pt', 'name': 'Portuguese', 'flag': 'pt'},  // Cờ Bồ Đào Nha
     {'code': 'tr', 'name': 'Turkish', 'flag': 'tr'},  // Cờ Thổ Nhĩ Kỳ
-    {'code': 'ar', 'name': 'Arabic', 'flag': 'sa'},  // Cờ Ả Rập Xê Út (Saudi Arabia)
+    {'code': 'ar', 'name': 'Arabic', 'flag': 'sa'},  // Cờ Ả Rập Xê Út
   ];
 
   @override
   void initState() {
     super.initState();
     selectedLanguage = widget.selectedLanguage;
+    selectedCountry = widget.selectedCountry;
   }
 
-  _saveSelectedLanguage(String flagCode) async {
+  // Lưu cả languageCode và flagCode vào SharedPreferences
+  Future<void> _saveSelectedLanguage(String languageCode, String flagCode) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedLanguage', flagCode);
+    await prefs.setString('selectedLanguage', languageCode);
+    await prefs.setString('selectedCountry', flagCode);
   }
 
   @override
@@ -66,15 +78,16 @@ class __LanguageSelectionDialogState extends State<_LanguageSelectionDialog> {
         return SimpleDialogOption(
           onPressed: () {
             setState(() {
-              selectedLanguage = language['flag']!;
+              selectedLanguage = language['code']!;
+              selectedCountry = language['flag']!;
             });
-            _saveSelectedLanguage(language['flag']!);
-            widget.onLanguageSelected(language['flag']!);
+            _saveSelectedLanguage(language['code']!, language['flag']!);  // Lưu cả languageCode và flagCode
+            widget.onLanguageSelected(language['code']!, language['flag']!);  // Trả về cả code và flag
             Navigator.pop(context);
           },
           child: Row(
             children: [
-               CountryFlag.fromCountryCode(language['flag']!, height: 18, width: 25),
+              CountryFlag.fromCountryCode(language['flag']!, height: 18, width: 25),
               const SizedBox(width: 10),
               Text(language['name']!),
             ],

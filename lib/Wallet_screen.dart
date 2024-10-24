@@ -47,14 +47,22 @@ class _WalletState extends State<Wallet> {
   }
   Future<void> _loadSelectedLanguageFlag() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String flagCode = prefs.getString('selectedLanguage') ?? 'us';  // Nếu không có, mặc định là cờ Mỹ
+    String flagCode = prefs.getString('selectedCountry') ?? 'us';  // Đọc flagCode, mặc định là Mỹ (us)
     setState(() {
-      selectedFlag = flagCode;
+      selectedFlag = flagCode;  // Lưu flagCode vào biến state để hiển thị cờ
     });
   }
 
-  // Khi người dùng chọn ngôn ngữ mới từ dialog
-  void _onLanguageSelected(String flagCode) {
+// Hàm xử lý khi người dùng chọn ngôn ngữ và quốc gia
+  void _onLanguageSelected(String languageCode, String flagCode) async {
+    print('Selected Language Code: $languageCode, Flag Code: $flagCode');
+
+    // Lưu cả mã ngôn ngữ và mã quốc gia
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedLanguage', languageCode);  // Lưu mã ngôn ngữ
+    await prefs.setString('selectedCountry', flagCode);  // Lưu mã quốc gia (flagCode)
+
+    // Cập nhật UI với cờ đã chọn
     setState(() {
       selectedFlag = flagCode;
     });

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,28 +14,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isDisposed = false; // Track if the widget is disposed
   List<dynamic> newsItems = [];
-  String languageCode = 'en';  // Mặc định là tiếng Anh
+  String languageCode = 'en'; // Default to English
+  String flagCode = 'us'; // Default to US flag
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        languageCode = Localizations.localeOf(context).languageCode;
-        print('Language Code: $languageCode');
-        fetchNewsData();
-      });
-    });
+    _loadLanguagePreference();
+    fetchNewsData();
   }
-
-
 
   Future<void> fetchNewsData() async {
     try {
-      final response = await http.get(Uri.parse(
-          'https://api-admin.kittyrun.net/api/content-mobile/?format=json'));
+      final response = await http.get(
+        Uri.parse('https://api-admin.kittyrun.net/api/content-mobile/?format=json'),
+      );
+
       if (response.statusCode == 200 && mounted) {
-        final jsonResponse = json.decode(response.body);
+        // Đảm bảo xử lý mã hóa UTF-8 cho dữ liệu từ API
+        final jsonResponse = json.decode(utf8.decode(response.bodyBytes)); // Sử dụng utf8.decode
         if (jsonResponse.containsKey('data')) {
           setState(() {
             newsItems = jsonResponse['data'];
@@ -54,15 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _isDisposed = true;
+    _isDisposed = true;  // Đánh dấu là đã hủy
     super.dispose();
   }
 
-  // Hàm để lấy nội dung theo ngôn ngữ của thiết bị
+  // Hàm lấy text theo ngôn ngữ đã chọn
   String getLocalizedText(Map<String, dynamic> data) {
-    return data[languageCode] ?? data['en'] ?? ''; // Mặc định trả về tiếng Anh nếu không tìm thấy ngôn ngữ
+    print('Current languageCode: $languageCode');  // Kiểm tra giá trị của languageCode
+    return data[languageCode] ?? data['en'] ?? ''; // Nếu không có ngôn ngữ đã chọn thì lấy mặc định tiếng Anh
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
@@ -76,13 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
               enlargeCenterPage: true,
               aspectRatio: 25 / 9,
               viewportFraction: 1,
-              onPageChanged: (index, reason) {
-                if (mounted) {
-                  setState(() {
-                    // Update the state
-                  });
-                }
-              },
             ),
             items: List.generate(
               newsItems.take(5).length,
@@ -94,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         image: DecorationImage(
-                          image: NetworkImage(item['imagesource']), // Sử dụng NetworkImage thay cho AssetImage
+                          image: NetworkImage(item['imagesource']),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -111,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 24,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'NotoSans', // Sử dụng font NotoSans
                           ),
                         ),
                       ),
@@ -138,11 +132,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListTile(
                       title: Text(
                         getLocalizedText(item['title']),
-                        style: const TextStyle(fontSize: 14),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'NotoSans', // Sử dụng font NotoSans
+                        ),
                       ),
                       subtitle: Text(
                         getLocalizedText(item['content']),
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'NotoSans', // Sử dụng font NotoSans
+                        ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                       leading: Image.network(
@@ -166,6 +166,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _loadLanguagePreference() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      languageCode = prefs.getString('selectedLanguage') ?? 'en';  // Mã ngôn ngữ (ví dụ: 'en', 'vi', ...)
+      flagCode = prefs.getString('selectedCountry') ?? 'us';  // Mã quốc gia (flag code)
+      print('Loaded Language Code: $languageCode, Flag Code: $flagCode');
+    });
+  }
+
+
   void _showNewsDetailPopup(BuildContext context, dynamic newsItem) {
     showModalBottomSheet(
       context: context,
@@ -178,6 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       builder: (BuildContext context) {
+        // Sử dụng cùng languageCode và flagCode từ SharedPreferences
         return DraggableScrollableSheet(
           expand: false,
           maxChildSize: 0.9,
@@ -200,11 +211,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.green,
+                            fontFamily: 'NotoSans', // Sử dụng font NotoSans
                           ),
                         ),
                         const SizedBox(height: 20),
-
-
                         AspectRatio(
                           aspectRatio: 16 / 9,
                           child: Image.network(
@@ -212,12 +222,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             fit: BoxFit.contain,
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
                         Text(
                           getLocalizedText(newsItem['content']),
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'NotoSans', // Sử dụng font NotoSans
+                          ),
                         ),
                         const SizedBox(height: 20),
                         const Text(
@@ -226,7 +237,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-
                     Positioned(
                       right: 0,
                       top: 0,

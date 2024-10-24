@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   flutter_carousel_widget: ^2.2.0
   convex_bottom_bar: ^3.2.0
   shared_preferences: ^2.3.2
@@ -57,6 +58,7 @@ dependencies:
   country_flags: ^3.0.0
   flutter_localizations:
     sdk: flutter
+
 
 dev_dependencies:
   flutter_launcher_icons: "^0.10.0"
@@ -92,6 +94,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  fonts:
+    - family: NotoSans
+      fonts:
+      - asset: assets/fonts/NotoSans-Regular.ttf
+      - asset: assets/fonts/NotoSans-Bold.ttf
+        weight: 700
   assets:
     - assets/images/usdt_logo.png
     - assets/images/bnb-bnb-logo.png
