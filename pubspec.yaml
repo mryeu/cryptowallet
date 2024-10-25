@@ -111,6 +111,16 @@ flutter:
     - assets/document_data.json
     - assets/translations/en.json
     - assets/translations/zh.json
+    - assets/translations/vi.json
+    - assets/translations/id.json
+    - assets/translations/hi.json
+    - assets/translations/ko.json
+    - assets/translations/th.json
+    - assets/translations/fr.json
+    - assets/translations/ar.json
+    - assets/translations/pt.json
+    - assets/translations/tr.json
+    - assets/translations/ru.json
 
 
 

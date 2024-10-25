@@ -1,0 +1,85 @@
+{
+  "setup_pin_screen": {
+    "enter_your_pin": "Digite seu PIN",
+    "enter_your_pin_restore": "Digite seu PIN para restaurar a carteira",
+    "enter_your_pin_create": "Digite seu PIN para criar uma nova carteira",
+    "enter_your_pin_unlock": "Digite seu PIN para desbloquear a carteira",
+    "reenter_your_pin": "Digite seu PIN novamente",
+    "pin_mismatch": "Os PINs não coincidem. Por favor, tente novamente.",
+    "failed_to_unlock": "Falha ao desbloquear a carteira. Tente novamente.",
+    "failed_to_create": "Falha ao criar a carteira. Tente novamente.",
+    "failed_to_restore": "Falha ao restaurar a carteira. Tente novamente.",
+    "unlocking_wallet": "Desbloqueando a carteira...",
+    "creating_wallet": "Criando a carteira, por favor aguarde...",
+    "restoring_wallet": "Restaurando a carteira, por favor aguarde...",
+    "confirm_wallet_deletion": "Confirmar exclusão da carteira",
+    "delete_wallet_warning": "Tem certeza de que deseja excluir esta carteira? Esta ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "remove_wallet": "Remover carteira"
+  },
+  "terms_screen": {
+    "title": "Termos de Uso",
+    "terms_content": "KittyRun Wallet - Termos e Condições\n\n1. **Natureza descentralizada**: KittyRun Wallet é uma carteira não custodial. Isso significa que você, o usuário, é totalmente responsável por gerenciar suas chaves privadas e frases de recuperação. Nós não armazenamos, controlamos ou temos acesso às suas chaves privadas ou fundos.\n\n2. **Privacidade**: Como uma carteira descentralizada, KittyRun Wallet não coleta nem armazena informações pessoais ou dados de transações. Todos os seus dados são armazenados localmente no seu dispositivo e nunca são transmitidos para nossos servidores.\n\n3. **Auto-custódia**: Você é o único proprietário de seus ativos. Se você perder suas chaves privadas ou a frase de recuperação, não poderá acessar seus fundos. É sua responsabilidade armazenar e fazer backup da sua frase de recuperação e chaves privadas com segurança.\n\n4. **Responsabilidade pelas transações**: Todas as transações realizadas através do KittyRun Wallet são irreversíveis e não podem ser desfeitas. Você é totalmente responsável por verificar os detalhes de suas transações antes de confirmá-las.\n\n5. **Segurança**: KittyRun Wallet usa criptografia padrão da indústria para proteger seus dados em seu dispositivo. No entanto, a segurança da sua carteira também depende da segurança do seu dispositivo. Você é responsável por proteger seu dispositivo contra acessos não autorizados, malwares e outras ameaças à segurança.\n\n6. **Atualizações**: Podemos lançar atualizações para melhorar a segurança, corrigir bugs ou adicionar novos recursos. Recomenda-se que você mantenha o aplicativo atualizado com a versão mais recente para garantir desempenho e segurança ideais.\n\n7. **Isenção de responsabilidade**: KittyRun Wallet e seus desenvolvedores não serão responsáveis por qualquer perda, dano ou despesa decorrente do uso ou da incapacidade de usar a carteira, incluindo, mas não se limitando à perda de fundos, violações de dados ou acessos não autorizados ao seu dispositivo.\n\n8. **Aceitação dos Termos**: Ao usar o KittyRun Wallet, você reconhece que leu, entendeu e concorda com esses termos. Se você não concorda com qualquer um desses termos, deve interromper imediatamente o uso da carteira.",
+    "agree_to_terms": "Eu concordo com os termos de uso",
+    "accept_button": "Aceitar"
+  },
+  "wallet_choice_screen": {
+    "title": "Configuração da Carteira",
+    "choose_option": "Escolha uma opção para configurar sua carteira:",
+    "create_new_wallet": "Criar Nova Carteira",
+    "import_mnemonic": "Importar Frase Mnemônica"
+  },
+  "import_mnemonic_screen": {
+    "title": "Importar Frase Mnemônica",
+    "enter_mnemonic": "Digite sua frase mnemônica de 12 palavras:",
+    "mnemonic_error": "Frase mnemônica inválida. Por favor, insira exatamente 12 palavras.",
+    "continue_button": "Continuar"
+  },
+  "verify_wallet_screen": {
+    "title": "Verificar Carteira",
+    "generated_mnemonic": "Sua frase mnemônica gerada: Por favor, salve-a com segurança e não a compartilhe com ninguém.",
+    "confirm_backup": "Confirmar backup da carteira",
+    "enter_words": "Digite 4 palavras da sua frase de recuperação",
+    "cancel": "Cancelar",
+    "verify": "Verificar"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "Criar Nova Carteira",
+    "import_mnemonic": "Importar Frase Mnemônica",
+    "remove_wallet": "Remover Carteira",
+    "welcome_to": "Bem-vindo ao",
+    "app_title": "Kittyrun Wallet",
+    "selection_text": "Por favor, faça uma seleção abaixo para criar ou importar uma frase mnemônica"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "Importar Frase de Recuperação",
+    "import_seed_and_save_wallet": "Importar Frase de Recuperação e Salvar Carteira"
+  },
+  "wallet_screen": {
+    "backup_wallet": "Fazer backup da carteira",
+    "restore_wallet": "Restaurar Carteira",
+    "enter_password": "Digite sua senha para começar a restaurar sua carteira:",
+    "restore_wallet_description": "Você não fez backup da sua carteira. Você deve armazenar as 12 palavras da frase de recuperação para proteger seus ativos.",
+    "later": "Mais tarde",
+    "confirm": "Confirmar",
+    "backup_successful": "Backup bem-sucedido",
+    "mnemonic_validation_failed": "Falha na validação da frase mnemônica",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "word_at_position": "Palavra na posição",
+    "validate": "Validar"
+  },
+  "backup_dialog": {
+    "title": "Fazer backup da carteira",
+    "description": "Você precisa fazer backup da sua carteira para manter seus ativos seguros. Certifique-se de anotar as palavras mnemônicas.",
+    "later": "Mais tarde",
+    "confirm": "Confirmar",
+    "validate": "Validar",
+    "mnemonic_error": "Falha na validação da frase mnemônica. Por favor, tente novamente.",
+    "backup_success": "Backup bem-sucedido!",
+    "i_have_written_mnemonic": "Eu anotei as 12 palavras mnemônicas",
+    "enter_mnemonic_words": "Por favor, insira as palavras a seguir com base nas suas posições:",
+    "word_at_position": "Palavra na posição"
+  }
+}

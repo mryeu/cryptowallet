@@ -1,0 +1,85 @@
+{
+  "setup_pin_screen": {
+    "enter_your_pin": "Masukkan PIN Anda",
+    "enter_your_pin_restore": "Masukkan PIN Anda untuk Memulihkan Dompet",
+    "enter_your_pin_create": "Masukkan PIN Anda untuk Membuat Dompet Baru",
+    "enter_your_pin_unlock": "Masukkan PIN Anda untuk Membuka Dompet",
+    "reenter_your_pin": "Masukkan ulang PIN Anda",
+    "pin_mismatch": "PIN tidak cocok. Silakan coba lagi.",
+    "failed_to_unlock": "Gagal membuka dompet. Coba lagi.",
+    "failed_to_create": "Gagal membuat dompet. Coba lagi.",
+    "failed_to_restore": "Gagal memulihkan dompet. Coba lagi.",
+    "unlocking_wallet": "Sedang membuka dompet...",
+    "creating_wallet": "Sedang membuat dompet, harap tunggu...",
+    "restoring_wallet": "Sedang memulihkan dompet, harap tunggu...",
+    "confirm_wallet_deletion": "Konfirmasi Penghapusan Dompet",
+    "delete_wallet_warning": "Apakah Anda yakin ingin menghapus dompet ini? Tindakan ini tidak dapat dibatalkan.",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "remove_wallet": "Hapus Dompet"
+  },
+  "terms_screen": {
+    "title": "Ketentuan Penggunaan",
+    "terms_content": "KittyRun Wallet - Syarat dan Ketentuan\n\n1. **Sifat Desentralisasi**: KittyRun Wallet adalah dompet non-custodial. Ini berarti Anda, sebagai pengguna, bertanggung jawab penuh untuk mengelola kunci pribadi dan frasa pemulihan Anda. Kami tidak menyimpan, mengontrol, atau memiliki akses ke kunci pribadi atau dana Anda.\n\n2. **Privasi**: Sebagai dompet desentralisasi, KittyRun Wallet tidak mengumpulkan atau menyimpan informasi pribadi atau data transaksi. Semua data Anda disimpan secara lokal di perangkat Anda dan tidak dikirimkan ke server kami.\n\n3. **Kepemilikan Diri Sendiri**: Anda adalah satu-satunya pemilik aset Anda. Jika Anda kehilangan kunci pribadi atau frasa pemulihan Anda, Anda tidak akan dapat mengakses dana Anda. Anda bertanggung jawab untuk menyimpan dan mencadangkan frasa pemulihan dan kunci pribadi Anda dengan aman.\n\n4. **Tanggung Jawab Transaksi**: Semua transaksi yang dilakukan melalui KittyRun Wallet tidak dapat dibatalkan dan tidak dapat diubah. Anda sepenuhnya bertanggung jawab untuk memverifikasi detail transaksi Anda sebelum mengonfirmasinya.\n\n5. **Keamanan**: KittyRun Wallet menggunakan enkripsi standar industri untuk melindungi data Anda di perangkat Anda. Namun, keamanan dompet Anda juga bergantung pada keamanan perangkat Anda. Anda bertanggung jawab untuk melindungi perangkat Anda dari akses tidak sah, malware, dan ancaman keamanan lainnya.\n\n6. **Pembaruan**: Kami mungkin merilis pembaruan untuk meningkatkan keamanan, memperbaiki bug, atau menambahkan fitur baru. Dianjurkan agar Anda menjaga aplikasi tetap diperbarui ke versi terbaru untuk memastikan kinerja dan keamanan yang optimal.\n\n7. **Tidak Bertanggung Jawab**: KittyRun Wallet dan pengembangnya tidak bertanggung jawab atas kehilangan, kerusakan, atau biaya yang timbul dari penggunaan atau ketidakmampuan untuk menggunakan dompet, termasuk tetapi tidak terbatas pada kehilangan dana, pelanggaran data, atau akses tidak sah ke perangkat Anda.\n\n8. **Penerimaan Ketentuan**: Dengan menggunakan KittyRun Wallet, Anda mengakui bahwa Anda telah membaca, memahami, dan menyetujui syarat dan ketentuan ini. Jika Anda tidak menyetujui salah satu dari ketentuan ini, Anda harus menghentikan penggunaan dompet segera.",
+    "agree_to_terms": "Saya setuju dengan syarat dan ketentuan penggunaan",
+    "accept_button": "Terima"
+  },
+  "wallet_choice_screen": {
+    "title": "Pengaturan Dompet",
+    "choose_option": "Pilih opsi untuk mengatur dompet Anda:",
+    "create_new_wallet": "Buat Dompet Baru",
+    "import_mnemonic": "Impor Frasa Pemulihan"
+  },
+  "import_mnemonic_screen": {
+    "title": "Impor Frasa Pemulihan",
+    "enter_mnemonic": "Masukkan frasa pemulihan 12 kata Anda:",
+    "mnemonic_error": "Frasa pemulihan tidak valid. Harap masukkan tepat 12 kata.",
+    "continue_button": "Lanjutkan"
+  },
+  "verify_wallet_screen": {
+    "title": "Verifikasi Dompet",
+    "generated_mnemonic": "Frasa pemulihan yang dihasilkan: Harap simpan dengan aman dan pastikan tidak dibagikan kepada orang lain.",
+    "confirm_backup": "Konfirmasi cadangan dompet",
+    "enter_words": "Masukkan 4 kata dari frasa pemulihan Anda",
+    "cancel": "Batal",
+    "verify": "Verifikasi"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "Buat Dompet Baru",
+    "import_mnemonic": "Impor Frasa Pemulihan",
+    "remove_wallet": "Hapus Dompet",
+    "welcome_to": "Selamat datang di",
+    "app_title": "Kittyrun Wallet",
+    "selection_text": "Silakan pilih di bawah untuk membuat atau mengimpor frasa pemulihan"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "Impor Frasa Pemulihan",
+    "import_seed_and_save_wallet": "Impor Frasa Pemulihan dan Simpan Dompet"
+  },
+  "wallet_screen": {
+    "backup_wallet": "Cadangkan Dompet",
+    "restore_wallet": "Pulihkan Dompet",
+    "enter_password": "Masukkan kata sandi Anda untuk mulai memulihkan dompet Anda:",
+    "restore_wallet_description": "Anda belum mencadangkan dompet Anda. Anda perlu menyimpan 12 kata frasa pemulihan untuk melindungi aset Anda.",
+    "later": "Nanti",
+    "confirm": "Konfirmasi",
+    "backup_successful": "Cadangan berhasil",
+    "mnemonic_validation_failed": "Validasi frasa pemulihan gagal",
+    "submit": "Kirim",
+    "cancel": "Batal",
+    "word_at_position": "Kata pada posisi",
+    "validate": "Validasi"
+  },
+  "backup_dialog": {
+    "title": "Cadangkan Dompet",
+    "description": "Anda perlu mencadangkan dompet Anda untuk menjaga aset Anda tetap aman. Pastikan untuk menulis frasa pemulihan.",
+    "later": "Nanti",
+    "confirm": "Konfirmasi",
+    "validate": "Validasi",
+    "mnemonic_error": "Validasi frasa pemulihan gagal. Silakan coba lagi.",
+    "backup_success": "Cadangan berhasil!",
+    "i_have_written_mnemonic": "Saya telah menulis 12 kata frasa pemulihan",
+    "enter_mnemonic_words": "Silakan masukkan kata-kata berikut berdasarkan posisinya:",
+    "word_at_position": "Kata pada posisi"
+  }
+}

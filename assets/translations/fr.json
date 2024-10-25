@@ -1,0 +1,85 @@
+{
+  "setup_pin_screen": {
+    "enter_your_pin": "Entrez votre code PIN",
+    "enter_your_pin_restore": "Entrez votre code PIN pour restaurer le portefeuille",
+    "enter_your_pin_create": "Entrez votre code PIN pour créer un nouveau portefeuille",
+    "enter_your_pin_unlock": "Entrez votre code PIN pour déverrouiller le portefeuille",
+    "reenter_your_pin": "Ressaisissez votre code PIN",
+    "pin_mismatch": "Les codes PIN ne correspondent pas. Veuillez réessayer.",
+    "failed_to_unlock": "Échec du déverrouillage du portefeuille. Veuillez réessayer.",
+    "failed_to_create": "Échec de la création du portefeuille. Veuillez réessayer.",
+    "failed_to_restore": "Échec de la restauration du portefeuille. Veuillez réessayer.",
+    "unlocking_wallet": "Déverrouillage du portefeuille...",
+    "creating_wallet": "Création du portefeuille, veuillez patienter...",
+    "restoring_wallet": "Restauration du portefeuille, veuillez patienter...",
+    "confirm_wallet_deletion": "Confirmer la suppression du portefeuille",
+    "delete_wallet_warning": "Êtes-vous sûr de vouloir supprimer ce portefeuille ? Cette action est irréversible.",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "remove_wallet": "Supprimer le portefeuille"
+  },
+  "terms_screen": {
+    "title": "Conditions d'utilisation",
+    "terms_content": "KittyRun Wallet - Conditions générales\n\n1. **Nature décentralisée** : KittyRun Wallet est un portefeuille non conservateur. Cela signifie que vous, en tant qu'utilisateur, êtes entièrement responsable de la gestion de vos clés privées et de vos phrases de récupération. Nous n'avons pas accès à vos clés privées ou à vos fonds.\n\n2. **Confidentialité** : En tant que portefeuille décentralisé, KittyRun Wallet ne collecte ni ne stocke aucune information personnelle ou données de transaction. Toutes vos données sont stockées localement sur votre appareil et ne sont jamais transmises à nos serveurs.\n\n3. **Auto-gestion** : Vous êtes le seul propriétaire de vos actifs. Si vous perdez vos clés privées ou votre phrase de récupération, vous ne pourrez pas accéder à vos fonds. Il est de votre responsabilité de stocker et de sauvegarder votre phrase de récupération et vos clés privées en toute sécurité.\n\n4. **Responsabilité des transactions** : Toutes les transactions effectuées via KittyRun Wallet sont irréversibles et ne peuvent être annulées. Vous êtes entièrement responsable de la vérification des détails de vos transactions avant de les confirmer.\n\n5. **Sécurité** : KittyRun Wallet utilise un cryptage standard de l'industrie pour protéger vos données sur votre appareil. Cependant, la sécurité de votre portefeuille dépend également de la sécurité de votre appareil. Vous êtes responsable de la protection de votre appareil contre tout accès non autorisé, les logiciels malveillants et autres menaces de sécurité.\n\n6. **Mises à jour** : Nous pouvons publier des mises à jour pour améliorer la sécurité, corriger des bugs ou ajouter de nouvelles fonctionnalités. Il est recommandé de maintenir l'application à jour avec la dernière version pour garantir des performances et une sécurité optimales.\n\n7. **Aucune responsabilité** : KittyRun Wallet et ses développeurs ne sont pas responsables de toute perte, dommage ou dépense découlant de l'utilisation ou de l'incapacité d'utiliser le portefeuille, y compris, mais sans s'y limiter, la perte de fonds, les violations de données ou les accès non autorisés à votre appareil.\n\n8. **Acceptation des conditions** : En utilisant KittyRun Wallet, vous reconnaissez avoir lu, compris et accepté ces conditions. Si vous n'acceptez pas ces conditions, vous devez immédiatement cesser d'utiliser le portefeuille.",
+    "agree_to_terms": "J'accepte les conditions d'utilisation",
+    "accept_button": "Accepter"
+  },
+  "wallet_choice_screen": {
+    "title": "Configuration du portefeuille",
+    "choose_option": "Choisissez une option pour configurer votre portefeuille :",
+    "create_new_wallet": "Créer un nouveau portefeuille",
+    "import_mnemonic": "Importer une phrase mnémonique"
+  },
+  "import_mnemonic_screen": {
+    "title": "Importer une phrase mnémonique",
+    "enter_mnemonic": "Entrez votre phrase mnémonique de 12 mots :",
+    "mnemonic_error": "Phrase mnémonique invalide. Veuillez entrer exactement 12 mots.",
+    "continue_button": "Continuer"
+  },
+  "verify_wallet_screen": {
+    "title": "Vérifier le portefeuille",
+    "generated_mnemonic": "Votre phrase mnémonique générée : veuillez la sauvegarder en toute sécurité et ne la partagez pas.",
+    "confirm_backup": "Confirmer la sauvegarde du portefeuille",
+    "enter_words": "Entrez 4 mots de votre phrase mnémonique",
+    "cancel": "Annuler",
+    "verify": "Vérifier"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "Créer un nouveau portefeuille",
+    "import_mnemonic": "Importer une phrase mnémonique",
+    "remove_wallet": "Supprimer le portefeuille",
+    "welcome_to": "Bienvenue dans",
+    "app_title": "Kittyrun Wallet",
+    "selection_text": "Veuillez faire un choix ci-dessous pour créer ou importer une phrase mnémonique"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "Importer une phrase de récupération",
+    "import_seed_and_save_wallet": "Importer une phrase de récupération et sauvegarder le portefeuille"
+  },
+  "wallet_screen": {
+    "backup_wallet": "Sauvegarder le portefeuille",
+    "restore_wallet": "Restaurer le portefeuille",
+    "enter_password": "Entrez votre mot de passe pour commencer à restaurer votre portefeuille :",
+    "restore_wallet_description": "Vous n'avez pas sauvegardé votre portefeuille. Vous devez conserver les 12 mots de votre phrase de récupération pour protéger vos actifs.",
+    "later": "Plus tard",
+    "confirm": "Confirmer",
+    "backup_successful": "Sauvegarde réussie",
+    "mnemonic_validation_failed": "Échec de la validation de la phrase mnémonique",
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "word_at_position": "Mot à la position",
+    "validate": "Valider"
+  },
+  "backup_dialog": {
+    "title": "Sauvegarde du portefeuille",
+    "description": "Vous devez sauvegarder votre portefeuille pour protéger vos actifs. Assurez-vous de noter les mots mnémoniques.",
+    "later": "Plus tard",
+    "confirm": "Confirmer",
+    "validate": "Valider",
+    "mnemonic_error": "Échec de la validation de la phrase mnémonique. Veuillez réessayer.",
+    "backup_success": "Sauvegarde réussie !",
+    "i_have_written_mnemonic": "J'ai écrit les 12 mots mnémoniques",
+    "enter_mnemonic_words": "Veuillez entrer les mots suivants en fonction de leur position :",
+    "word_at_position": "Mot à la position"
+  }
+}

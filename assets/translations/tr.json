@@ -1,0 +1,85 @@
+{
+  "setup_pin_screen": {
+    "enter_your_pin": "PIN'inizi girin",
+    "enter_your_pin_restore": "Cüzdanı geri yüklemek için PIN'inizi girin",
+    "enter_your_pin_create": "Yeni cüzdan oluşturmak için PIN'inizi girin",
+    "enter_your_pin_unlock": "Cüzdanın kilidini açmak için PIN'inizi girin",
+    "reenter_your_pin": "PIN'inizi tekrar girin",
+    "pin_mismatch": "PIN'ler eşleşmiyor. Lütfen tekrar deneyin.",
+    "failed_to_unlock": "Cüzdanın kilidi açılamadı. Tekrar deneyin.",
+    "failed_to_create": "Cüzdan oluşturulamadı. Tekrar deneyin.",
+    "failed_to_restore": "Cüzdan geri yüklenemedi. Tekrar deneyin.",
+    "unlocking_wallet": "Cüzdanın kilidi açılıyor...",
+    "creating_wallet": "Cüzdan oluşturuluyor, lütfen bekleyin...",
+    "restoring_wallet": "Cüzdan geri yükleniyor, lütfen bekleyin...",
+    "confirm_wallet_deletion": "Cüzdan silmeyi onaylayın",
+    "delete_wallet_warning": "Bu cüzdanı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "remove_wallet": "Cüzdanı Kaldır"
+  },
+  "terms_screen": {
+    "title": "Kullanım Şartları",
+    "terms_content": "KittyRun Cüzdanı - Şartlar ve Koşullar\n\n1. **Merkezi Olmayan Yapı**: KittyRun Cüzdanı, bir non-custodial (güvenceli olmayan) cüzdandır. Bu, kullanıcının özel anahtarlarını ve kurtarma ifadelerini yönetmekten tamamen sorumlu olduğu anlamına gelir. Biz, özel anahtarlarınıza veya fonlarınıza erişemeyiz.\n\n2. **Gizlilik**: Merkezi olmayan bir cüzdan olarak KittyRun Cüzdanı, hiçbir kişisel bilgi veya işlem verisini toplamaz veya saklamaz. Tüm verileriniz yerel olarak cihazınızda saklanır ve asla sunucularımıza iletilmez.\n\n3. **Kendinize Ait Saklama**: Varlıklarınızın tek sahibi sizsiniz. Özel anahtarlarınızı veya kurtarma ifadenizi kaybederseniz, fonlarınıza erişemezsiniz. Kurtarma ifadenizi ve özel anahtarlarınızı güvenli bir şekilde saklamak ve yedeklemek sizin sorumluluğunuzdadır.\n\n4. **İşlem Sorumluluğu**: KittyRun Cüzdanı aracılığıyla gerçekleştirilen tüm işlemler geri alınamaz ve iptal edilemez. İşlemlerinizi onaylamadan önce detaylarını kontrol etme sorumluluğu tamamen size aittir.\n\n5. **Güvenlik**: KittyRun Cüzdanı, cihazınızda verilerinizi korumak için endüstri standardında şifreleme kullanır. Ancak, cüzdanınızın güvenliği cihazınızın güvenliğine de bağlıdır. Cihazınızı yetkisiz erişim, kötü amaçlı yazılımlar ve diğer güvenlik tehditlerine karşı korumak sizin sorumluluğunuzdadır.\n\n6. **Güncellemeler**: Güvenliği artırmak, hataları düzeltmek veya yeni özellikler eklemek için güncellemeler yayınlayabiliriz. Uygulamanın en son sürümünü kullanarak optimum performans ve güvenliği sağlamak için uygulamayı güncel tutmanız önerilir.\n\n7. **Sorumluluk Reddi**: KittyRun Cüzdanı ve geliştiricileri, cüzdanın kullanımından veya kullanılamamasından kaynaklanan hiçbir kayıp, zarar veya masraftan sorumlu değildir. Bu, ancak bunlarla sınırlı olmamak üzere, fon kaybı, veri ihlalleri veya cihazınıza yetkisiz erişimi içerir.\n\n8. **Şartların Kabulü**: KittyRun Cüzdanı'nı kullanarak, bu şartları okuduğunuzu, anladığınızı ve kabul ettiğinizi kabul etmiş olursunuz. Bu şartlardan herhangi birini kabul etmiyorsanız, cüzdanı kullanmayı derhal bırakmalısınız.",
+    "agree_to_terms": "Kullanım şartlarını kabul ediyorum",
+    "accept_button": "Kabul Et"
+  },
+  "wallet_choice_screen": {
+    "title": "Cüzdan Kurulumu",
+    "choose_option": "Cüzdanınızı kurmak için bir seçenek seçin:",
+    "create_new_wallet": "Yeni Cüzdan Oluştur",
+    "import_mnemonic": "Mnemonic İfadesini İçe Aktar"
+  },
+  "import_mnemonic_screen": {
+    "title": "Mnemonic İfadesini İçe Aktar",
+    "enter_mnemonic": "12 kelimelik mnemonic ifadenizi girin:",
+    "mnemonic_error": "Geçersiz mnemonic ifadesi. Lütfen tam olarak 12 kelime girin.",
+    "continue_button": "Devam Et"
+  },
+  "verify_wallet_screen": {
+    "title": "Cüzdanı Doğrula",
+    "generated_mnemonic": "Oluşturulan mnemonic ifadeniz: Lütfen güvenli bir şekilde saklayın ve başkalarıyla paylaşmayın.",
+    "confirm_backup": "Cüzdan yedeklemesini doğrulayın",
+    "enter_words": "Kurtarma ifadenizden 4 kelime girin",
+    "cancel": "İptal",
+    "verify": "Doğrula"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "Yeni Cüzdan Oluştur",
+    "import_mnemonic": "Mnemonic İfadesini İçe Aktar",
+    "remove_wallet": "Cüzdanı Kaldır",
+    "welcome_to": "Hoş geldiniz",
+    "app_title": "Kittyrun Cüzdan",
+    "selection_text": "Mnemonic oluşturmak veya içe aktarmak için aşağıdan seçim yapın"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "Kurtarma İfadesini İçe Aktar",
+    "import_seed_and_save_wallet": "Kurtarma İfadesini İçe Aktar ve Cüzdanı Kaydet"
+  },
+  "wallet_screen": {
+    "backup_wallet": "Cüzdanı Yedekle",
+    "restore_wallet": "Cüzdanı Geri Yükle",
+    "enter_password": "Cüzdanınızı geri yüklemeye başlamak için şifrenizi girin:",
+    "restore_wallet_description": "Cüzdanınızı yedeklemediniz. Varlıklarınızı korumak için 12 kelimelik kurtarma ifadenizi saklamanız gerekiyor.",
+    "later": "Sonra",
+    "confirm": "Onayla",
+    "backup_successful": "Yedekleme başarılı",
+    "mnemonic_validation_failed": "Mnemonic doğrulama başarısız oldu",
+    "submit": "Gönder",
+    "cancel": "İptal",
+    "word_at_position": "Konumdaki kelime",
+    "validate": "Doğrula"
+  },
+  "backup_dialog": {
+    "title": "Cüzdanı Yedekle",
+    "description": "Varlıklarınızı güvende tutmak için cüzdanınızı yedeklemeniz gerekiyor. Mnemonic kelimeleri not aldığınızdan emin olun.",
+    "later": "Sonra",
+    "confirm": "Onayla",
+    "validate": "Doğrula",
+    "mnemonic_error": "Mnemonic doğrulama başarısız oldu. Lütfen tekrar deneyin.",
+    "backup_success": "Yedekleme başarılı!",
+    "i_have_written_mnemonic": "12 kelimelik mnemonic ifadesini not aldım",
+    "enter_mnemonic_words": "Belirtilen pozisyonlara göre kelimeleri girin:",
+    "word_at_position": "Pozisyondaki kelime"
+  }
+}

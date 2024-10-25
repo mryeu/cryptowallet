@@ -1,0 +1,85 @@
+{
+  "setup_pin_screen": {
+    "enter_your_pin": "Nhập mã PIN của bạn",
+    "enter_your_pin_restore": "Nhập mã PIN của bạn để khôi phục ví",
+    "enter_your_pin_create": "Nhập mã PIN của bạn để tạo ví mới",
+    "enter_your_pin_unlock": "Nhập mã PIN của bạn để mở khóa ví",
+    "reenter_your_pin": "Nhập lại mã PIN của bạn",
+    "pin_mismatch": "Mã PIN không khớp. Vui lòng thử lại.",
+    "failed_to_unlock": "Mở khóa ví không thành công. Thử lại.",
+    "failed_to_create": "Tạo ví không thành công. Thử lại.",
+    "failed_to_restore": "Khôi phục ví không thành công. Thử lại.",
+    "unlocking_wallet": "Đang mở khóa ví...",
+    "creating_wallet": "Đang tạo ví, vui lòng đợi...",
+    "restoring_wallet": "Đang khôi phục ví, vui lòng đợi...",
+    "confirm_wallet_deletion": "Xác nhận xóa ví",
+    "delete_wallet_warning": "Bạn có chắc chắn muốn xóa ví này? Hành động này không thể hoàn tác.",
+    "cancel": "Hủy bỏ",
+    "delete": "Xóa",
+    "remove_wallet": "Xóa ví"
+  },
+  "terms_screen": {
+    "title": "Điều khoản sử dụng",
+    "terms_content": "KittyRun Wallet - Điều khoản và điều kiện\n\n1. **Tính chất phi tập trung**: KittyRun Wallet là ví phi tập trung. Điều này có nghĩa là bạn, người dùng, hoàn toàn chịu trách nhiệm quản lý khóa cá nhân và cụm từ khôi phục của mình. Chúng tôi không lưu trữ, kiểm soát hoặc có quyền truy cập vào khóa cá nhân hoặc tài sản của bạn.\n\n2. **Quyền riêng tư**: Vì là ví phi tập trung, KittyRun Wallet không thu thập hoặc lưu trữ bất kỳ thông tin cá nhân hoặc dữ liệu giao dịch nào. Tất cả dữ liệu của bạn được lưu trữ cục bộ trên thiết bị của bạn và không được truyền tải đến máy chủ của chúng tôi.\n\n3. **Quyền sở hữu tự quản lý**: Bạn là người duy nhất sở hữu tài sản của mình. Nếu bạn mất khóa cá nhân hoặc cụm từ khôi phục, bạn sẽ không thể truy cập tài sản của mình. Bạn có trách nhiệm lưu trữ và sao lưu cụm từ khôi phục và khóa cá nhân của mình.\n\n4. **Trách nhiệm giao dịch**: Tất cả các giao dịch được thực hiện qua KittyRun Wallet đều không thể hoàn tác. Bạn chịu hoàn toàn trách nhiệm kiểm tra chi tiết giao dịch trước khi xác nhận.\n\n5. **Bảo mật**: KittyRun Wallet sử dụng mã hóa tiêu chuẩn ngành để bảo vệ dữ liệu của bạn trên thiết bị. Tuy nhiên, bảo mật của ví cũng phụ thuộc vào bảo mật của thiết bị của bạn. Bạn chịu trách nhiệm bảo vệ thiết bị của mình khỏi truy cập trái phép, phần mềm độc hại và các mối đe dọa bảo mật khác.\n\n6. **Cập nhật**: Chúng tôi có thể phát hành các bản cập nhật để cải thiện bảo mật, sửa lỗi hoặc thêm tính năng mới. Bạn nên cập nhật ứng dụng lên phiên bản mới nhất để đảm bảo hiệu suất và bảo mật tốt nhất.\n\n7. **Miễn trách nhiệm**: KittyRun Wallet và các nhà phát triển sẽ không chịu trách nhiệm về bất kỳ tổn thất, thiệt hại hoặc chi phí phát sinh từ việc sử dụng hoặc không thể sử dụng ví, bao gồm nhưng không giới hạn tổn thất tài sản, vi phạm dữ liệu hoặc truy cập trái phép vào thiết bị của bạn.\n\n8. **Chấp nhận điều khoản**: Bằng cách sử dụng KittyRun Wallet, bạn xác nhận rằng bạn đã đọc, hiểu và đồng ý với các điều khoản này. Nếu bạn không đồng ý với bất kỳ điều khoản nào, bạn nên ngừng sử dụng ví ngay lập tức.",
+    "agree_to_terms": "Tôi đồng ý với các điều khoản sử dụng",
+    "accept_button": "Chấp nhận"
+  },
+  "wallet_choice_screen": {
+    "title": "Thiết lập ví",
+    "choose_option": "Chọn một tùy chọn để thiết lập ví của bạn:",
+    "create_new_wallet": "Tạo ví mới",
+    "import_mnemonic": "Nhập cụm từ khôi phục"
+  },
+  "import_mnemonic_screen": {
+    "title": "Nhập cụm từ khôi phục",
+    "enter_mnemonic": "Nhập cụm từ khôi phục gồm 12 từ của bạn:",
+    "mnemonic_error": "Cụm từ khôi phục không hợp lệ. Vui lòng nhập chính xác 12 từ.",
+    "continue_button": "Tiếp tục"
+  },
+  "verify_wallet_screen": {
+    "title": "Xác minh ví",
+    "generated_mnemonic": "Cụm từ khôi phục của bạn: Vui lòng lưu trữ an toàn và không chia sẻ với người khác.",
+    "confirm_backup": "Xác nhận sao lưu ví",
+    "enter_words": "Nhập 4 từ từ cụm từ khôi phục của bạn",
+    "cancel": "Hủy bỏ",
+    "verify": "Xác minh"
+  },
+  "wallet_selector_screen": {
+    "create_wallet": "Tạo ví mới",
+    "import_mnemonic": "Nhập cụm từ khôi phục",
+    "remove_wallet": "Xóa ví",
+    "welcome_to": "Chào mừng đến với",
+    "app_title": "Kittyrun Wallet",
+    "selection_text": "Vui lòng chọn bên dưới để tạo hoặc nhập cụm từ khôi phục"
+  },
+  "import_seed_screen": {
+    "import_seed_phrase": "Nhập cụm từ khôi phục",
+    "import_seed_and_save_wallet": "Nhập cụm từ khôi phục và lưu ví"
+  },
+  "wallet_screen": {
+    "backup_wallet": "Sao lưu ví",
+    "restore_wallet": "Khôi phục ví",
+    "enter_password": "Nhập mật khẩu của bạn để bắt đầu khôi phục ví:",
+    "restore_wallet_description": "Bạn chưa sao lưu ví của mình. Bạn cần lưu trữ 12 từ khôi phục để bảo vệ tài sản của mình.",
+    "later": "Để sau",
+    "confirm": "Xác nhận",
+    "backup_successful": "Sao lưu thành công",
+    "mnemonic_validation_failed": "Xác minh cụm từ khôi phục thất bại",
+    "submit": "Gửi",
+    "cancel": "Hủy bỏ",
+    "word_at_position": "Từ ở vị trí",
+    "validate": "Xác thực"
+  },
+  "backup_dialog": {
+    "title": "Sao lưu ví",
+    "description": "Bạn cần sao lưu ví của mình để bảo vệ tài sản. Hãy chắc chắn ghi lại các từ khôi phục.",
+    "later": "Để sau",
+    "confirm": "Xác nhận",
+    "validate": "Xác thực",
+    "mnemonic_error": "Xác minh cụm từ khôi phục thất bại. Vui lòng thử lại.",
+    "backup_success": "Sao lưu thành công!",
+    "i_have_written_mnemonic": "Tôi đã ghi lại 12 từ khôi phục",
+    "enter_mnemonic_words": "Vui lòng nhập các từ dựa trên vị trí của chúng:",
+    "word_at_position": "Từ ở vị trí"
+  }
+}
