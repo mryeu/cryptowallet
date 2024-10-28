@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'langguage.dart';
 import 'main.dart';
 
 class SetupPinScreen extends StatefulWidget {
@@ -277,6 +278,8 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
       await prefs.remove('wallet_pin');
       await prefs.remove('wallet_data');
       await prefs.remove('acceptedTerms');
+      prefs.setBool('hasBackedUp', false);
+
 
       // Thêm log để kiểm tra sau khi xóa
       print("After deletion, wallet_created: ${prefs.getBool('wallet_created')}");

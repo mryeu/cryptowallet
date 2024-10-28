@@ -13,7 +13,17 @@ D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/logo_ktr.png
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/sort.svg
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/images/usdt_logo.png
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/ar.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/en.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/fr.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/hi.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/id.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/ko.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/pt.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/ru.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/th.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/tr.json
+D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/vi.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/assets/translations/zh.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/FontManifest.json
 D:/cryptowallet/build/windows/x64/runner/Debug/data/flutter_assets/fonts/MaterialIcons-Regular.otf
