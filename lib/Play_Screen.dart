@@ -6,6 +6,7 @@ import 'package:cryptowallet/wallet_create.dart'; // Import wallet creation func
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:web3dart/web3dart.dart';
 
 
 import 'WalletDetailsPage.dart';
@@ -117,7 +118,8 @@ class _PlayScreenState extends State<PlayScreen> {
 
       if (can_play) {
         if (usdt! >= 480) {
-            String txHash = await memberService.addDeposit(context, wallet['privateKey'], wallet['address']);  
+            EthereumAddress accountAddress = EthereumAddress.fromHex(wallet['address']); // Replace with your account address
+            String txHash = await memberService.addDeposit(context, wallet['privateKey'], accountAddress);  
             ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Add auto play success $txHash',

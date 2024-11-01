@@ -159,7 +159,8 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
       double? usdt = await checker.getUsdtBalance(wallet['address']);
 
       if (usdt! >= 480) {
-          String txHash = await memberService.addDeposit(context, wallet['privateKey'], wallet['address']);  
+          EthereumAddress accountAddress = EthereumAddress.fromHex(wallet['address']); // Replace with your account address
+          String txHash = await memberService.addDeposit(context, wallet['privateKey'], accountAddress);  
           ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Add auto play success $txHash',
