@@ -24,7 +24,7 @@ class MemberService {
   final EthereumAddress contractDataAddress = EthereumAddress.fromHex(
       '0xF871c38C6505Fb96a40164424aEa2178c0C7cfB6');
   final EthereumAddress contractClaimAddress = EthereumAddress.fromHex(
-      '0xCe0FE6d980914292804AdbEC0f55392712953b74');
+      '0x6a97B3e148051bD4F3730659b6d3aD8302399F8B');
 
   final String kittyRunApiUrl = 'https://kittyrun.io/api/';
   

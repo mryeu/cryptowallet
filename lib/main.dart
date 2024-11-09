@@ -35,9 +35,28 @@ void main() async {
         ? const SetupPinScreen()
         : (walletData == null
         ? const WalletSelectorScreen()
-        : const WalletScreen()))
+        : const AspectRatioApp())) // Bọc WalletScreen với AspectRatioApp
         : const TermsScreen(),
   ));
+}
+
+class AspectRatioApp extends StatelessWidget {
+  const AspectRatioApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 506,  // Chiều rộng cố định
+          height: 900, // Chiều cao cố định
+          child: MaterialApp(
+            home: WalletScreen(),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class WalletScreen extends StatefulWidget {

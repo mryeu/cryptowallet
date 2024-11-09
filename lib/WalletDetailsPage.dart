@@ -451,6 +451,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
+
                         ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
@@ -459,7 +460,10 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                             var member = wallet['histories'][index];
                             bool isClaim = checkClaim(int.parse(member['timestamp']));
                             String timeClaim = formatTimeEnd(int.parse(member['timestamp']));
-                            String shortTxID = member['TxID'].substring(0, 5);  // Rút gọn TxID còn 5 ký tự
+                            String shortTxID = member['TxID'].substring(0, 5);
+
+                            // Số lượt Interactive còn lại từ 1-14
+                            int interactiveCount = 14 - index;
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 2.0),
@@ -476,17 +480,17 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: member['info'][1] == true || !isClaim ? Colors.green : Colors.red, // Xanh nếu đã claim, đỏ nếu interactive
+                                      color: member['info'][1] == true || !isClaim ? Colors.green : Colors.red,
                                       width: 1.0,
                                     ),
-                                    borderRadius: BorderRadius.circular(8), // Bo góc cho đường viền
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   padding: const EdgeInsets.all(8.0),
                                   child: Row(
                                     children: [
                                       // Cột 1: Hiển thị index (#)
                                       Expanded(
-                                        flex: 1,  // Chiếm 1 phần
+                                        flex: 1,
                                         child: Text(
                                           '#${index + 1}',
                                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -494,21 +498,25 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                       ),
                                       // Cột 2: Chứa thông tin Played, TxID, và Time Claim
                                       Expanded(
-                                        flex: 7,  // Chiếm 7 phần
+                                        flex: 7,
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text('Played: ${member['info'][1] == true ? 'Claimed' : 'Played'}'),
-                                            Text('TxID: $shortTxID'),  // Rút gọn TxID chỉ còn 5 ký tự
+                                            Text('TxID: $shortTxID'),
                                             Text('Time claim: $timeClaim'),
+                                            // if (interactiveCount > 0)
+                                            //   Text('Interactive: $interactiveCount'), // Hiển thị Interactive khi còn trong 1-14
                                           ],
                                         ),
                                       ),
-                                      // Cột 3: Nút Action (Claim hoặc Claimed)
+                                      // Cột 3: Nút Action (Claim/Interactive)
                                       Expanded(
-                                        flex: 5,  // Chiếm 3 phần
+                                        flex: 5,
                                         child: ElevatedButton(
-                                          onPressed: member['info'][1] == true
+                                          onPressed: interactiveCount > 0
+                                              ? null // Không khả dụng nếu trong 1-14
+                                              : member['info'][1] == true
                                               ? () {
                                             // Hiển thị Snackbar khi nút "Claimed" được nhấn
                                             ScaffoldMessenger.of(context).showSnackBar(
@@ -521,20 +529,24 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                                               ? () {
                                             _onClaim(member, wallet['histories']);
                                           }
-                                              : null,  // Disable button if already Claimed
+                                              : null,
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: member['info'][1] == true
-                                                ? Colors.yellow // Màu vàng khi đã Claimed
-                                                : isClaim == true
-                                                ? Colors.green // Màu xanh khi có thể Claim
-                                                : Colors.grey, // Màu xám khi không thể Claim
+                                            backgroundColor: interactiveCount > 0
+                                                ? Colors.grey // Xám khi Interactive
+                                                : member['info'][1] == true
+                                                ? Colors.yellow
+                                                : isClaim
+                                                ? Colors.green
+                                                : Colors.red,
                                           ),
                                           child: Text(
-                                            member['info'][1] == true
-                                                ? 'Claimed' // Hiển thị Claimed khi đã Claim
+                                            interactiveCount > 0
+                                                ? 'Interactive' // Hiển thị "Interactive" từ 1-14
+                                                : member['info'][1] == true
+                                                ? 'Claimed'
                                                 : isClaim
-                                                ? 'Claim' // Hiển thị Claim nếu có thể Claim
-                                                : 'Interactive',
+                                                ? 'Claim'
+                                                : 'Not Available',
                                             style: const TextStyle(color: Colors.white),
                                           ),
                                         ),
@@ -545,7 +557,7 @@ class _WalletDetailsState extends State<WalletDetailsPage> {
                               ),
                             );
                           },
-                        )
+                        ),
                       ],
                     ),
                   ],
